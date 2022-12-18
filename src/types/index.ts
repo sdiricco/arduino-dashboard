@@ -1,6 +1,6 @@
 import * as electron from "electron";
 
-export interface IElectronError {
+export interface IError {
   code?: null | number;
   message?: null | string;
   details?: null | string;
@@ -8,16 +8,17 @@ export interface IElectronError {
   channel?: null | string;
 }
 
-export interface IElectronIPC {
-    error: IElectronError;
+export interface IIPC {
+    error: IError;
     data: any
 }
 
 export interface IShowMessageBoxReturnValue {
   data: electron.MessageBoxReturnValue,
-  error: IElectronError
+  error: IError
 }
 
-export enum ElectronChannel {
+export enum Channel {
   ShowMessageBox = "electron/show-message-box",
+  Menu = "electron/menu"
 }

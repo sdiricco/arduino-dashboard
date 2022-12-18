@@ -17,7 +17,7 @@ process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'os'
 import { join } from 'path'
-import * as mainHandle from './mainHandle'
+import * as mainHooks from "./mainHooks"
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()
@@ -73,7 +73,7 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
-  mainHandle.setWin(win)
+  mainHooks.onWindowCreated(win)
 }
 
 app.whenReady().then(createWindow)

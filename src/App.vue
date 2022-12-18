@@ -35,7 +35,8 @@
 </template>
 
 <script lang="ts" setup>
-import {showMessageBox, Electron} from "./electronRenderer"
+import {showMessageBox, onMenuAction} from "./electronRenderer"
+import {MessageBoxOptions} from "electron"
 import { ref, onMounted } from "vue";
 
 let drawer = ref(false);
@@ -43,7 +44,10 @@ let drawer = ref(false);
 
 onMounted(async () => {
   console.log("mounted");
-  const messageBoxOptions: Electron.MessageBoxOptions = {
+  onMenuAction((data:any)=> {
+    console.log(data)
+  })
+  const messageBoxOptions: MessageBoxOptions = {
     message: "Hello",
     title: "My Title",
     buttons: [
