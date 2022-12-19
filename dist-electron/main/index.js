@@ -3,7 +3,7 @@ const electron = require("electron");
 const os = require("os");
 const path = require("path");
 const R = require("ramda");
-const _ = require("lodash");
+require("lodash");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -23,6 +23,8 @@ function _interopNamespaceDefault(e) {
 const R__namespace = /* @__PURE__ */ _interopNamespaceDefault(R);
 var Channel = /* @__PURE__ */ ((Channel2) => {
   Channel2["ShowMessageBox"] = "electron/show-message-box";
+  Channel2["ShowSaveDialog"] = "electron/show-save-dialog";
+  Channel2["ShowOpenDialog"] = "electron/show-open-dialog";
   Channel2["Menu"] = "electron/menu";
   return Channel2;
 })(Channel || {});
@@ -31,8 +33,7 @@ async function errorHandle(fn, error) {
   try {
     result.data = await fn();
   } catch (e) {
-    result.error.details = e.message;
-    result.error = { ...result.error, ...error };
+    result.error = { ...{ details: e.message }, ...error };
   }
   return result;
 }
@@ -42,32 +43,36 @@ function sendToClient(win2, channel = "", data) {
 function handleDialogs(win2) {
   electron.ipcMain.handle(Channel.ShowMessageBox, async (_evt, data) => {
     const error = {
-      code: 19,
+      code: 0,
       message: "Error during opening message box dialog electron API",
       type: "electron",
       channel: Channel.ShowMessageBox
     };
-    return await errorHandle(async () => await electron.dialog.showMessageBox(win2, data), error);
+    return await errorHandle(async () => {
+      await electron.dialog.showMessageBox(win2, data);
+    }, error);
   });
-}
-function treeToArray(array = [], { children = "submenu" } = {}) {
-  const iterateFn = (item) => {
-    return !item[children] || !item[children].length ? item : [item, _.flatMapDeep(item[children], iterateFn)];
-  };
-  return _.flatMapDeep(array, iterateFn);
-}
-function arrayToTree(array = [], { id = null, parentId = "parentId", children = "submenu" } = {}) {
-  return array.filter((item) => item[parentId] === id).map((item) => ({
-    ...item,
-    [children]: arrayToTree(array, { id: item.id })
-  })).map((item) => {
-    if (!item[children].length) {
-      delete item[children];
-    }
-    return item;
+  electron.ipcMain.handle(Channel.ShowSaveDialog, async (_evt, data) => {
+    const error = {
+      code: 0,
+      message: "Error during opening saving dialog electron API",
+      type: "electron",
+      channel: Channel.ShowSaveDialog
+    };
+    return await errorHandle(async () => await electron.dialog.showSaveDialog(win2, data), error);
+  });
+  electron.ipcMain.handle(Channel.ShowOpenDialog, async (_evt, data) => {
+    const error = {
+      code: 0,
+      message: "Error during opening message open dialog electron API",
+      type: "electron",
+      channel: Channel.ShowOpenDialog
+    };
+    return await errorHandle(async () => await electron.dialog.showOpenDialog(win2, data), error);
   });
 }
 process.platform === "darwin";
+let defaultTemplate = [];
 let template = [];
 let window = null;
 let clickCallback = null;
@@ -162,32 +167,9 @@ function create(win2, onClickItem) {
     }
   ];
   template = R__namespace.clone(__template);
-  R__namespace.clone(__template);
-  const item = getItem("device/port");
-  const coms = ["COM1", "COM2"];
-  const submenu = coms.map((el) => {
-    return {
-      id: `device/port/${el}`,
-      parentId: "device/port",
-      label: el,
-      click: (menuItem) => onClickItem({ ...optionsFiltered(menuItem) })
-    };
-  });
-  item.submenu = submenu;
-  updateItem("device/port", item);
-}
-function getItem(id = null) {
-  const array = treeToArray(template);
-  return array.find((item) => item.id === id);
-}
-function updateItem(id = null, item = {}) {
-  const array = treeToArray(template);
-  const idx = array.findIndex((item2) => item2.id === id);
-  if (idx >= 0) {
-    array[idx] = { ...array[idx], ...item };
-  }
-  const tree = arrayToTree(array);
-  buildMenuFromTemplate(window, tree);
+  defaultTemplate = R__namespace.clone(__template);
+  console.table(defaultTemplate);
+  buildMenuFromTemplate(window, template);
 }
 function optionsFiltered(menuItem) {
   return {

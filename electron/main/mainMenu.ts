@@ -19,8 +19,7 @@ export function buildMenuFromTemplate(window, template) {
   window.setMenu(menu);
 }
 
-
-
+/* CREATE MENU */
 export function create(win, onClickItem) {
   window = win;
   clickCallback = onClickItem;
@@ -109,32 +108,16 @@ export function create(win, onClickItem) {
   ];
   template = R.clone(__template);
   defaultTemplate = R.clone(__template);
-
-  const item = getItem('device/port');
-
-  const coms = ['COM1', 'COM2'];
-
-  const submenu = coms.map(el => {
-    return {
-      id: `device/port/${el}`,
-      parentId: "device/port",
-      label: el,
-      click: (menuItem) => onClickItem({...optionsFiltered(menuItem)})
-    }
-  })
-
-  item.submenu = submenu
-
-  updateItem('device/port', item)
-
-  // buildMenuFromTemplate(window, template); 
+  buildMenuFromTemplate(window, template); 
 }
 
+/* GET ITEM FROM MENU BY ID */
 export function getItem(id = null) {
   const array = treeToArray(template);
   return array.find((item) => item.id === id);
 }
 
+/* UPDATE ITEM FROM MENU BY ID */
 export function updateItem(id = null, item = {}) {
   const array = treeToArray(template);
   const idx = array.findIndex((item) => item.id === id);
@@ -145,6 +128,7 @@ export function updateItem(id = null, item = {}) {
   buildMenuFromTemplate(window, tree);
 }
 
+/* DELETE ITEM FROM MENU BY ID */
 export function deleteItem(id = null) {
   const array = treeToArray(template);
   const idx = array.findIndex((item) => item.id === id);
@@ -155,7 +139,7 @@ export function deleteItem(id = null) {
   buildMenuFromTemplate(window, tree);
 }
 
-
+/* FILTER DATA FROM EVENT CLICK */
 function optionsFiltered(menuItem) {
   return {
     id: menuItem.id || null,

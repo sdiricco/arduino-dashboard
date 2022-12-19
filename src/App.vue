@@ -1,64 +1,37 @@
 <template>
-  <v-app id="inspire">
-    <v-system-bar>
+  <v-app>
+    <v-app-bar class="px-3" flat density="compact">
       <v-spacer></v-spacer>
-
-      <v-icon icon="mdi:mdi-minus" />
-    </v-system-bar>
-
-    <v-app-bar>
-      <v-app-bar-nav-icon icon="mdi-menu" @click="drawer = !drawer"></v-app-bar-nav-icon>
-
-      <v-toolbar-title>Application</v-toolbar-title>
+      <v-tabs centered color="grey-darken-2">
+        <v-tab v-for="link in r.links" :key="link" :to="`/${link}`">
+          {{ link }}
+        </v-tab>
+      </v-tabs>
+      <v-spacer></v-spacer>
     </v-app-bar>
-
-    <v-navigation-drawer v-model="drawer" temporary>
-      <!--  -->
-    </v-navigation-drawer>
-
-    <v-main class="bg-grey-lighten-2">
-      <v-container>
-        <v-row>
-          <template v-for="n in 4" :key="n">
-            <v-col class="mt-2" cols="12">
-              <strong>Category {{ n }}</strong>
-            </v-col>
-
-            <v-col v-for="j in 6" :key="`${n}${j}`" cols="6" md="2">
-              <v-sheet height="150"></v-sheet>
-            </v-col>
-          </template>
-        </v-row>
-      </v-container>
+    <v-main class="bg-grey-lighten-3">
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
 
-<script lang="ts" setup>
-import {showMessageBox, onMenuAction} from "./electronRenderer"
-import {MessageBoxOptions} from "electron"
-import { ref, onMounted } from "vue";
+<script setup lang="ts">
+import { reactive, onMounted } from "vue";
+import { showMessageBox } from "./electronRenderer";
 
-let drawer = ref(false);
-
+const r = reactive({
+  links: ["home", "about"],
+});
 
 onMounted(async () => {
-  console.log("mounted");
-  onMenuAction((data:any)=> {
-    console.log(data)
-  })
-  const messageBoxOptions: MessageBoxOptions = {
-    message: "Hello",
-    title: "My Title",
-    buttons: [
-      'cancel',
-      'ok',
-    ],
-    detail: 'my details'
-  };
-  const result = await showMessageBox(messageBoxOptions);
-  console.log(result);
+  try {
+    const response = await showMessageBox({ message: "hello" });
+    console.log(response);
+  } catch (e) {
+    console.error('+++ ERROR ON MOUNTED +++')
+    console.table(e)
+  }
 });
 </script>
 
-<style></style>
+<style scoped></style>

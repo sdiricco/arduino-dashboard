@@ -9,6 +9,7 @@ import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
 import pkg from './package.json'
 import vuetify from 'vite-plugin-vuetify'
+import path from 'path'
 
 
 rmSync('dist-electron', { recursive: true, force: true })
@@ -88,6 +89,11 @@ export default defineConfig({
       autoImport: true,
     }),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: process.env.VSCODE_DEBUG ? (() => {
     const url = new URL(pkg.debug.env.VITE_DEV_SERVER_URL)
     return {

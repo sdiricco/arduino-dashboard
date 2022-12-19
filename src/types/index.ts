@@ -18,7 +18,14 @@ export interface IShowMessageBoxReturnValue {
   error: IError
 }
 
+export interface ISaveDialogReturnValue {
+  data: electron.SaveDialogReturnValue,
+  error: IError
+}
+
 export enum Channel {
   ShowMessageBox = "electron/show-message-box",
+  ShowSaveDialog = "electron/show-save-dialog",
+  ShowOpenDialog = "electron/show-open-dialog",
   Menu = "electron/menu"
 }

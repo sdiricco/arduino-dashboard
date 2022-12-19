@@ -20,5 +20,7 @@ export interface IShowMessageBoxReturnValue {
 
 export enum Channel {
   ShowMessageBox = "electron/show-message-box",
+  ShowSaveDialog = "electron/show-save-dialog",
+  ShowOpenDialog = "electron/show-open-dialog",
   Menu = "electron/menu"
 }
