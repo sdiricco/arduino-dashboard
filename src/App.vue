@@ -1,13 +1,21 @@
 <template>
   <v-app>
-    <v-app-bar class="px-3" flat density="compact">
-      <v-spacer></v-spacer>
-      <v-tabs centered color="grey-darken-2">
-        <v-tab v-for="link in r.links" :key="link" :to="`/${link}`">
-          {{ link }}
-        </v-tab>
-      </v-tabs>
-      <v-spacer></v-spacer>
+    <v-app-bar density="comfortable">
+      <v-container fluid class="d-flex align-center">
+        <v-btn icon="mdi-power-plug" variant="outlined" size="small" @click="onClickConnect"></v-btn>
+        <v-btn icon="mdi-power-plug-off" class="mr-2" variant="outlined" size="small"></v-btn>
+        <div class="w200">
+          <v-select
+            v-model="store.selectedPort"
+            density="compact"
+            variant="outlined"
+            hide-details
+            item-title="port.address"
+            item-value="port"
+            return-object
+            :items="store.availableBoards"></v-select>
+        </div>
+      </v-container>
     </v-app-bar>
     <v-main class="bg-grey-lighten-3">
       <router-view></router-view>
@@ -16,22 +24,22 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from "vue";
-import { showMessageBox } from "./electronRenderer";
+import { onMounted } from "vue";
+import { useMainStore } from "./store/main";
+const store = useMainStore();
 
-const r = reactive({
-  links: ["home", "about"],
-});
+async function onClickConnect(){
+  await store.connectToBoard()
+  await store.setAllPinsAsOutput();
+}
 
 onMounted(async () => {
-  try {
-    const response = await showMessageBox({ message: "hello" });
-    console.log(response);
-  } catch (e) {
-    console.error('+++ ERROR ON MOUNTED +++')
-    console.table(e)
-  }
+  await store.fetchAvailableBoards();
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.w200 {
+  width: 200px;
+}
+</style>

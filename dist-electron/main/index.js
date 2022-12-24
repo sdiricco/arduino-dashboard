@@ -1,7 +1,7 @@
 "use strict";
 const electron = require("electron");
 const os = require("os");
-const path = require("path");
+const path$1 = require("path");
 const R = require("ramda");
 require("lodash");
 function _interopNamespaceDefault(e) {
@@ -21,13 +21,22 @@ function _interopNamespaceDefault(e) {
   return Object.freeze(n);
 }
 const R__namespace = /* @__PURE__ */ _interopNamespaceDefault(R);
-var Channel = /* @__PURE__ */ ((Channel2) => {
-  Channel2["ShowMessageBox"] = "electron/show-message-box";
-  Channel2["ShowSaveDialog"] = "electron/show-save-dialog";
-  Channel2["ShowOpenDialog"] = "electron/show-open-dialog";
-  Channel2["Menu"] = "electron/menu";
-  return Channel2;
-})(Channel || {});
+const CH = {
+  ELECTRON: {
+    SHOW_MESSAGE_BOX: "electron/show-message-box",
+    SHOW_SAVE_DIALOG: "electron/show-save-dialog",
+    SHOW_OPEN_DIALOG: "electron/show-open-dialog",
+    ON_MENU_ACTION: "electron/on-menu-action"
+  },
+  ARDUINO: {
+    GET_BOARDS: "arduino/get-boards"
+  },
+  FIRMATA: {
+    CONNECT: "firmata/connect",
+    PIN_MODE: "firmata/pin-mode",
+    DIGITAL_WRITE: "firmata/digital-write"
+  }
+};
 async function errorHandle(fn, error) {
   const result = {};
   try {
@@ -37,42 +46,114 @@ async function errorHandle(fn, error) {
   }
   return result;
 }
+const { spawn } = require("child_process");
+function execute(command, args) {
+  return new Promise((res) => {
+    const child = spawn(command, args);
+    child.stdout.on("data", (buffer) => {
+      res(buffer.toString());
+    });
+  });
+}
+const path = require("path");
+const arduinoCli = path.resolve("./extra-resources/arduino-cli");
+async function getBoards() {
+  const stdout = await execute(arduinoCli, ["board", "list", "--format", "json"]);
+  return JSON.parse(stdout);
+}
+const Firmata = require("firmata");
+let board = null;
+function connect(path2) {
+  console.log("[FIRMATA:CONNECT]", `path ${path2}`);
+  return new Promise(async (res) => {
+    board = new Firmata(path2, async () => {
+      res(true);
+    });
+  });
+}
+function pinMode({ pin = null, mode = null }) {
+  console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
+  board.pinMode(pin, mode);
+}
+function digitalWrite({ pin = null, value = null }) {
+  console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
+  board.digitalWrite(pin, value);
+}
 function sendToClient(win2, channel = "", data) {
   win2.webContents.send(channel, data);
 }
 function handleDialogs(win2) {
-  electron.ipcMain.handle(Channel.ShowMessageBox, async (_evt, data) => {
+  electron.ipcMain.handle(CH.ELECTRON.SHOW_MESSAGE_BOX, async (_evt, data) => {
     const error = {
       code: 0,
       message: "Error during opening message box dialog electron API",
       type: "electron",
-      channel: Channel.ShowMessageBox
+      channel: CH.ELECTRON.SHOW_MESSAGE_BOX
     };
     return await errorHandle(async () => {
       await electron.dialog.showMessageBox(win2, data);
     }, error);
   });
-  electron.ipcMain.handle(Channel.ShowSaveDialog, async (_evt, data) => {
+  electron.ipcMain.handle(CH.ELECTRON.SHOW_SAVE_DIALOG, async (_evt, data) => {
     const error = {
       code: 0,
       message: "Error during opening saving dialog electron API",
       type: "electron",
-      channel: Channel.ShowSaveDialog
+      channel: CH.ELECTRON.SHOW_SAVE_DIALOG
     };
     return await errorHandle(async () => await electron.dialog.showSaveDialog(win2, data), error);
   });
-  electron.ipcMain.handle(Channel.ShowOpenDialog, async (_evt, data) => {
+  electron.ipcMain.handle(CH.ELECTRON.SHOW_OPEN_DIALOG, async (_evt, data) => {
     const error = {
       code: 0,
       message: "Error during opening message open dialog electron API",
       type: "electron",
-      channel: Channel.ShowOpenDialog
+      channel: CH.ELECTRON.SHOW_OPEN_DIALOG
     };
     return await errorHandle(async () => await electron.dialog.showOpenDialog(win2, data), error);
   });
 }
+function handleArduino() {
+  electron.ipcMain.handle(CH.ARDUINO.GET_BOARDS, async (_evt) => {
+    const error = {
+      code: 0,
+      message: "Error during get arduino boards",
+      type: "arduino",
+      channel: CH.ARDUINO.GET_BOARDS
+    };
+    return await errorHandle(async () => await getBoards(), error);
+  });
+}
+function handleFirmata() {
+  electron.ipcMain.handle(CH.FIRMATA.CONNECT, async (_evt, payload) => {
+    const error = {
+      code: 0,
+      message: "Error during connect to firmata",
+      type: "firmata",
+      channel: CH.FIRMATA.CONNECT
+    };
+    return await errorHandle(async () => await connect(payload), error);
+  });
+  electron.ipcMain.handle(CH.FIRMATA.PIN_MODE, async (_evt, data) => {
+    const error = {
+      code: 0,
+      message: "Error during executing pinMode firmata function",
+      type: "firmata",
+      channel: CH.FIRMATA.PIN_MODE
+    };
+    return await errorHandle(async () => pinMode(data), error);
+  });
+  electron.ipcMain.handle(CH.FIRMATA.DIGITAL_WRITE, async (_evt, data) => {
+    const error = {
+      code: 0,
+      message: "Error during executing digitalWrite firmata function",
+      type: "firmata",
+      channel: CH.FIRMATA.DIGITAL_WRITE
+    };
+    return await errorHandle(async () => digitalWrite(data), error);
+  });
+}
 process.platform === "darwin";
-let defaultTemplate = [];
 let template = [];
 let window = null;
 let clickCallback = null;
@@ -167,8 +248,7 @@ function create(win2, onClickItem) {
     }
   ];
   template = R__namespace.clone(__template);
-  defaultTemplate = R__namespace.clone(__template);
-  console.table(defaultTemplate);
+  R__namespace.clone(__template);
   buildMenuFromTemplate(window, template);
 }
 function optionsFiltered(menuItem) {
@@ -190,13 +270,15 @@ function optionsFiltered(menuItem) {
 }
 function onWindowCreated(window2) {
   handleDialogs(window2);
+  handleArduino();
+  handleFirmata();
   create(window2, (data) => {
-    sendToClient(window2, Channel.Menu, data);
+    sendToClient(window2, CH.ELECTRON.ON_MENU_ACTION, data);
   });
 }
-process.env.DIST_ELECTRON = path.join(__dirname, "..");
-process.env.DIST = path.join(process.env.DIST_ELECTRON, "../dist");
-process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL ? path.join(process.env.DIST_ELECTRON, "../public") : process.env.DIST;
+process.env.DIST_ELECTRON = path$1.join(__dirname, "..");
+process.env.DIST = path$1.join(process.env.DIST_ELECTRON, "../dist");
+process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL ? path$1.join(process.env.DIST_ELECTRON, "../public") : process.env.DIST;
 if (os.release().startsWith("6.1"))
   electron.app.disableHardwareAcceleration();
 if (process.platform === "win32")
@@ -206,13 +288,13 @@ if (!electron.app.requestSingleInstanceLock()) {
   process.exit(0);
 }
 let win = null;
-const preload = path.join(__dirname, "../preload/index.js");
+const preload = path$1.join(__dirname, "../preload/index.js");
 const url = process.env.VITE_DEV_SERVER_URL;
-const indexHtml = path.join(process.env.DIST, "index.html");
+const indexHtml = path$1.join(process.env.DIST, "index.html");
 async function createWindow() {
   win = new electron.BrowserWindow({
     title: "Main window",
-    icon: path.join(process.env.PUBLIC, "favicon.ico"),
+    icon: path$1.join(process.env.PUBLIC, "favicon.ico"),
     webPreferences: {
       preload,
       nodeIntegration: true,

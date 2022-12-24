@@ -1,17 +1,16 @@
 <template>
-  <div :class="['text-h3', 'pa-16', 'centered']">Home Page</div>
+    <v-container class="d-flex align-center flex-wrap">
+    <v-sheet v-for="(pin, i) in store.pins" class="pa-4 ma-4 d-flex flex-column align-center justify-center" rounded>
+      <v-chip>{{ i }}</v-chip>
+      <v-switch inset color="primary" hide-details @click="(evt:any)=>digitalWrite({pin: i, value: evt.target.checked ? 0x01 : 0x00})"></v-switch>
+    </v-sheet> 
+  </v-container>
 </template>
 
 <script setup lang="ts">
-
+import { digitalWrite } from "../electronRenderer";
+import { useMainStore } from "../store/main";
+const store = useMainStore();
 </script>
 
-<style scoped>
-.centered{
-  height: 100%;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  display: flex;
-}
-</style>
+<style scoped></style>

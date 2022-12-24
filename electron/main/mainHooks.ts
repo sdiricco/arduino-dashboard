@@ -1,11 +1,13 @@
 import { BrowserWindow } from "electron";
 import * as mainHandle from "./mainHandle";
 import * as mainMenu from "./mainMenu";
-import {Channel} from "../types"
+import {CH} from "../types"
 
 export function onWindowCreated(window: BrowserWindow) {
   mainHandle.handleDialogs(window)
+  mainHandle.handleArduino();
+  mainHandle.handleFirmata()
   mainMenu.create(window, (data:any) => {
-    mainHandle.sendToClient(window ,Channel.Menu, data);
+    mainHandle.sendToClient(window ,CH.ELECTRON.ON_MENU_ACTION, data);
   });
 }

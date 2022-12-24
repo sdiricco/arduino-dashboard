@@ -15,15 +15,18 @@
   },
   "dependencies": {
     "@mdi/font": "7.0.96",
+    "firmata": "^2.3.0",
     "lodash": "^4.17.21",
     "pinia": "^2.0.28",
     "ramda": "^0.28.0",
     "roboto-fontface": "*",
+    "usb-detection": "^4.14.1",
     "vue-router": "4",
     "vuetify": "^3.0.4",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.2.10",
     "@vitejs/plugin-vue": "^4.0.0",
     "electron": "^22.0.0",
     "electron-builder": "^23.3.3",
