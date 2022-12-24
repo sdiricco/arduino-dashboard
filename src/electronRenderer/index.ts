@@ -26,6 +26,10 @@ export async function digitalWrite(payload:any): Promise<any>{
   return await ipcRenderer.invoke(CH.FIRMATA.DIGITAL_WRITE, payload)
 }
 
+export async function getPins(): Promise<any>{
+  return await ipcRenderer.invoke(CH.FIRMATA.GET_PINS)
+}
+
 export async function invokeChildWin()  {
   return await ipcRenderer.invoke('open-win');
 }

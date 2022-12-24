@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import {getBoards, connect, pinMode} from "../electronRenderer"
+import {getBoards, connect, pinMode, getPins} from "../electronRenderer"
 
 interface IPort {
   address: string,
@@ -16,14 +16,18 @@ interface IBoard {
 interface IState {
   availableBoards: Array<IBoard>,
   selectedPort: IBoard | null,
-  pins: Array<any>
+  pins: Array<any>,
+  loading: any
 }
 
 export const useMainStore = defineStore("counter", {
   state: ():IState => ({ 
     availableBoards: [],
     selectedPort: null,
-    pins: []
+    pins: [],
+    loading:{
+      connect: false
+    }
   }),
 
   actions: {
@@ -37,27 +41,33 @@ export const useMainStore = defineStore("counter", {
       }
     },
     async connectToBoard(){
+      this.loading.connect = true
       try {
         const port = this.selectedPort && this.selectedPort.port && this.selectedPort.port.address || null
-        await connect(port)
+        await connect(port);
+        const response = await getPins();
+        this.pins = response.data;
       } catch (e) {
         console.error("--- ERROR CONNECTING TO BOARD ---");
         console.table(e)
       }
+      this.loading.connect = false
+
     },
     async setAllPinsAsOutput(){
       for (let i = 0; i < 14; i++) {
         try {
           await pinMode({ pin: i, mode: 0x01 });
-          this.pins.push({
-            value: 0,
-          });
+          const response = await getPins();
+          this.pins = response.data;
         } catch (e) {
           console.error("--- ERROR SET PIN AS OUTPUT ---");
           console.table(e)
         }
 
       }
+      console.log(this.pins)
+
     }
   },
 });

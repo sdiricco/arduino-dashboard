@@ -34,7 +34,8 @@ const CH = {
   FIRMATA: {
     CONNECT: "firmata/connect",
     PIN_MODE: "firmata/pin-mode",
-    DIGITAL_WRITE: "firmata/digital-write"
+    DIGITAL_WRITE: "firmata/digital-write",
+    GET_PINS: "firmata/get-pins"
   }
 };
 async function errorHandle(fn, error) {
@@ -62,22 +63,25 @@ async function getBoards() {
   return JSON.parse(stdout);
 }
 const Firmata = require("firmata");
-let board = null;
+let firmata = null;
 function connect(path2) {
   console.log("[FIRMATA:CONNECT]", `path ${path2}`);
   return new Promise(async (res) => {
-    board = new Firmata(path2, async () => {
+    firmata = new Firmata(path2, async () => {
       res(true);
     });
   });
 }
+function getPins() {
+  return firmata.pins;
+}
 function pinMode({ pin = null, mode = null }) {
   console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
-  board.pinMode(pin, mode);
+  firmata.pinMode(pin, mode);
 }
 function digitalWrite({ pin = null, value = null }) {
   console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
-  board.digitalWrite(pin, value);
+  firmata.digitalWrite(pin, value);
 }
 function sendToClient(win2, channel = "", data) {
   win2.webContents.send(channel, data);
@@ -151,6 +155,15 @@ function handleFirmata() {
       channel: CH.FIRMATA.DIGITAL_WRITE
     };
     return await errorHandle(async () => digitalWrite(data), error);
+  });
+  electron.ipcMain.handle(CH.FIRMATA.GET_PINS, async () => {
+    const error = {
+      code: 0,
+      message: "Error during executing getPins firmata function",
+      type: "firmata",
+      channel: CH.FIRMATA.GET_PINS
+    };
+    return await errorHandle(async () => getPins(), error);
   });
 }
 process.platform === "darwin";

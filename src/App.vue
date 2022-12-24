@@ -17,7 +17,10 @@
         </div>
       </v-container>
     </v-app-bar>
-    <v-main class="bg-grey-lighten-3">
+    <v-main>
+      <v-snackbar location="bottom right" v-model="store.loading.connect">
+        Connecting to selected board..
+      </v-snackbar>
       <router-view></router-view>
     </v-main>
   </v-app>
@@ -35,6 +38,7 @@ async function onClickConnect(){
 
 onMounted(async () => {
   await store.fetchAvailableBoards();
+
 });
 </script>
 

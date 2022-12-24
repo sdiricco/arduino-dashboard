@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, dialog } from "electron";
 import { IError, CH } from "../types";
 import { errorHandle } from "./errorHandle";
 import { getBoards } from "../../electron/modules/arduino";
-import { connect, pinMode, digitalWrite } from "../../electron/modules/firmata";
+import { connect, pinMode, digitalWrite, getPins } from "../../electron/modules/firmata";
 
 export function sendToClient(win: BrowserWindow, channel = "", data) {
   win.webContents.send(channel, data);
@@ -90,5 +90,14 @@ export function handleFirmata() {
       channel: CH.FIRMATA.DIGITAL_WRITE,
     };
     return await errorHandle(async () => digitalWrite(data), error);
+  });
+  ipcMain.handle(CH.FIRMATA.GET_PINS, async () => {
+    const error: IError = {
+      code: 0,
+      message: "Error during executing getPins firmata function",
+      type: "firmata",
+      channel: CH.FIRMATA.GET_PINS,
+    };
+    return await errorHandle(async () => getPins(), error);
   });
 }
