@@ -38,5 +38,13 @@ export const CH = {
     PIN_MODE: "firmata/pin-mode",
     DIGITAL_WRITE: "firmata/digital-write",
     GET_PINS: "firmata/get-pins"
+  },
+  SERIAL_PORT: {
+    GET_PORTS: "serialport/get-ports"
+  },
+  USB_DETECTION: {
+    START: "usb-detection/start",
+    STOP: "usb-detection/stop",
+    ON_CHANGE: "usb-detection/on-change",
   }
 }

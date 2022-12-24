@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import {getBoards, connect, pinMode, getPins} from "../electronRenderer"
+import {getBoards, connect, pinMode, getPins, onChangeUsbDevices, showMessageBox} from "../electronRenderer"
 
 interface IPort {
   address: string,
@@ -31,13 +31,17 @@ export const useMainStore = defineStore("counter", {
   }),
 
   actions: {
+    async startUp(){
+      await this.fetchAvailableBoards();
+      onChangeUsbDevices(this.fetchAvailableBoards)
+    },
     async fetchAvailableBoards() {
       try {
-        const response = await getBoards();
-        this.availableBoards = response.data;
-      } catch (e) {
+        this.availableBoards = await getBoards();
+      } catch (e:any) {
         console.error("--- ERROR FETCHING BOARDS ---");
         console.table(e)
+        showMessageBox({message: e?.message, title: "Error", detail:e?.details})
       }
     },
     async connectToBoard(){
@@ -45,27 +49,28 @@ export const useMainStore = defineStore("counter", {
       try {
         const port = this.selectedPort && this.selectedPort.port && this.selectedPort.port.address || null
         await connect(port);
-        const response = await getPins();
-        this.pins = response.data;
-      } catch (e) {
+        this.pins = await getPins();
+      } catch (e:any) {
         console.error("--- ERROR CONNECTING TO BOARD ---");
-        console.table(e)
+        console.table(e);
+        showMessageBox({message: e?.message, title: "Error", detail:e?.details})
       }
       this.loading.connect = false
+    },
+    async disconnectBoard(){
 
     },
     async setAllPinsAsOutput(){
       for (let i = 0; i < 14; i++) {
         try {
           await pinMode({ pin: i, mode: 0x01 });
-          const response = await getPins();
-          this.pins = response.data;
-        } catch (e) {
+        } catch (e:any) {
           console.error("--- ERROR SET PIN AS OUTPUT ---");
           console.table(e)
+          showMessageBox({message: e?.message, title: "Error", detail:e?.details})
         }
-
       }
+      this.pins = await getPins();
       console.log(this.pins)
 
     }

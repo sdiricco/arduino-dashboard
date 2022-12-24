@@ -6,8 +6,9 @@ import {CH} from "../types"
 export function onWindowCreated(window: BrowserWindow) {
   mainHandle.handleDialogs(window)
   mainHandle.handleArduino();
-  mainHandle.handleFirmata()
-  mainMenu.create(window, (data:any) => {
-    mainHandle.sendToClient(window ,CH.ELECTRON.ON_MENU_ACTION, data);
-  });
+  mainHandle.handleFirmata();
+  mainHandle.handleUsbDetection(window);
+  // mainMenu.create(window, (data:any) => {
+  //   mainHandle.sendToClient(window ,CH.ELECTRON.ON_MENU_ACTION, data);
+  // });
 }

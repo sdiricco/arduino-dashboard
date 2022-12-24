@@ -2,25 +2,6 @@
 const electron = require("electron");
 const os = require("os");
 const path$1 = require("path");
-const R = require("ramda");
-require("lodash");
-function _interopNamespaceDefault(e) {
-  const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
-  if (e) {
-    for (const k in e) {
-      if (k !== "default") {
-        const d = Object.getOwnPropertyDescriptor(e, k);
-        Object.defineProperty(n, k, d.get ? d : {
-          enumerable: true,
-          get: () => e[k]
-        });
-      }
-    }
-  }
-  n.default = e;
-  return Object.freeze(n);
-}
-const R__namespace = /* @__PURE__ */ _interopNamespaceDefault(R);
 const CH = {
   ELECTRON: {
     SHOW_MESSAGE_BOX: "electron/show-message-box",
@@ -36,6 +17,14 @@ const CH = {
     PIN_MODE: "firmata/pin-mode",
     DIGITAL_WRITE: "firmata/digital-write",
     GET_PINS: "firmata/get-pins"
+  },
+  SERIAL_PORT: {
+    GET_PORTS: "serialport/get-ports"
+  },
+  USB_DETECTION: {
+    START: "usb-detection/start",
+    STOP: "usb-detection/stop",
+    ON_CHANGE: "usb-detection/on-change"
   }
 };
 async function errorHandle(fn, error) {
@@ -66,9 +55,9 @@ const Firmata = require("firmata");
 let firmata = null;
 function connect(path2) {
   console.log("[FIRMATA:CONNECT]", `path ${path2}`);
-  return new Promise(async (res) => {
-    firmata = new Firmata(path2, async () => {
-      res(true);
+  return new Promise(async (res, rej) => {
+    firmata = new Firmata(path2, async (e) => {
+      e ? rej(e) : res(true);
     });
   });
 }
@@ -76,12 +65,30 @@ function getPins() {
   return firmata.pins;
 }
 function pinMode({ pin = null, mode = null }) {
-  console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
-  firmata.pinMode(pin, mode);
+  try {
+    console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
+    firmata.pinMode(pin, mode);
+  } catch (e) {
+    console.error("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
+  }
 }
 function digitalWrite({ pin = null, value = null }) {
-  console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
-  firmata.digitalWrite(pin, value);
+  try {
+    console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
+    firmata.digitalWrite(pin, value);
+  } catch (e) {
+    console.error("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
+  }
+}
+var usbDetect = require("usb-detection");
+function start() {
+  usbDetect.startMonitoring();
+}
+function stop() {
+  usbDetect.stopMonitoring();
+}
+function onChange(callback) {
+  usbDetect.on("change", callback);
 }
 function sendToClient(win2, channel = "", data) {
   win2.webContents.send(channel, data);
@@ -166,128 +173,44 @@ function handleFirmata() {
     return await errorHandle(async () => getPins(), error);
   });
 }
-process.platform === "darwin";
-let template = [];
-let window = null;
-let clickCallback = null;
-function buildMenuFromTemplate(window2, template2) {
-  const menu = electron.Menu.buildFromTemplate(template2);
-  window2.setMenu(menu);
+function handleUsbDetection(win2) {
+  start();
+  onChange(() => {
+    sendToClient(win2, CH.USB_DETECTION.ON_CHANGE, true);
+  });
+  electron.ipcMain.handle(CH.USB_DETECTION.START, async (_evt) => {
+    const error = {
+      code: 0,
+      message: "Error during start usb detection",
+      type: "serialport",
+      channel: CH.USB_DETECTION.START
+    };
+    return await errorHandle(async () => start(), error);
+  });
+  electron.ipcMain.handle(CH.USB_DETECTION.STOP, async (_evt) => {
+    const error = {
+      code: 0,
+      message: "Error during stop usb detection",
+      type: "serialport",
+      channel: CH.USB_DETECTION.STOP
+    };
+    return await errorHandle(async () => stop(), error);
+  });
+  electron.ipcMain.handle(CH.USB_DETECTION.ON_CHANGE, async (_evt) => {
+    const error = {
+      code: 0,
+      message: "Error during stop usb detection",
+      type: "serialport",
+      channel: CH.USB_DETECTION.STOP
+    };
+    return await errorHandle(async () => stop(), error);
+  });
 }
-function create(win2, onClickItem) {
-  window = win2;
-  clickCallback = onClickItem;
-  let __template = [
-    {
-      id: "file",
-      parentId: null,
-      label: "File",
-      submenu: [
-        {
-          id: "file/new",
-          parentId: "file",
-          label: "New",
-          accelerator: "Ctrl + N",
-          click: (menuItem) => clickCallback({ ...optionsFiltered(menuItem) })
-        },
-        {
-          id: "file/open",
-          parentId: "file",
-          label: "Open",
-          accelerator: "Ctrl + O",
-          click: (menuItem) => clickCallback({ ...optionsFiltered(menuItem) })
-        },
-        {
-          id: "file/separator-1",
-          parentId: "file",
-          type: "separator"
-        },
-        {
-          id: "file/save",
-          parentId: "file",
-          label: "Save",
-          accelerator: "Ctrl + S",
-          click: (menuItem) => clickCallback({ ...optionsFiltered(menuItem) })
-        },
-        {
-          id: "file/saveas",
-          parentId: "file",
-          label: "Save as..",
-          accelerator: "Ctrl + Shift + S",
-          click: (menuItem) => clickCallback({ ...optionsFiltered(menuItem) })
-        },
-        {
-          id: "file/separator-2",
-          parentId: "file",
-          type: "separator"
-        },
-        {
-          id: "file/preferences",
-          parentId: "file",
-          label: "Preferences",
-          click: (menuItem) => onClickItem({ ...optionsFiltered(menuItem) })
-        },
-        {
-          id: "file/separator-3",
-          parentId: "file",
-          type: "separator"
-        },
-        {
-          id: "file/quit",
-          parentId: "file",
-          role: "quit"
-        }
-      ]
-    },
-    {
-      id: "device",
-      parentId: null,
-      label: "Device",
-      submenu: [
-        {
-          id: "device/port",
-          parentId: "device",
-          label: "Port",
-          submenu: [
-            {
-              id: "device/port/COM6",
-              parentId: "device/port",
-              label: "COM6",
-              click: (menuItem) => onClickItem({ ...optionsFiltered(menuItem) })
-            }
-          ]
-        }
-      ]
-    }
-  ];
-  template = R__namespace.clone(__template);
-  R__namespace.clone(__template);
-  buildMenuFromTemplate(window, template);
-}
-function optionsFiltered(menuItem) {
-  return {
-    id: menuItem.id || null,
-    label: menuItem.label || null,
-    type: menuItem.type || null,
-    checked: menuItem.checked || null,
-    role: menuItem.role || null,
-    accelerator: menuItem.accelerator || null,
-    sublabel: menuItem.sublabel || null,
-    toolTip: menuItem.toolTip || null,
-    enabled: menuItem.enabled || null,
-    visible: menuItem.visible || null,
-    acceleratorWorksWhenHidden: menuItem.acceleratorWorksWhenHidden || null,
-    registerAccelerator: menuItem.registerAccelerator || null,
-    commandId: menuItem.commandId || null
-  };
-}
-function onWindowCreated(window2) {
-  handleDialogs(window2);
+function onWindowCreated(window) {
+  handleDialogs(window);
   handleArduino();
   handleFirmata();
-  create(window2, (data) => {
-    sendToClient(window2, CH.ELECTRON.ON_MENU_ACTION, data);
-  });
+  handleUsbDetection(window);
 }
 process.env.DIST_ELECTRON = path$1.join(__dirname, "..");
 process.env.DIST = path$1.join(process.env.DIST_ELECTRON, "../dist");

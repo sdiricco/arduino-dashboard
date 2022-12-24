@@ -3,6 +3,7 @@ import { IError, CH } from "../types";
 import { errorHandle } from "./errorHandle";
 import { getBoards } from "../../electron/modules/arduino";
 import { connect, pinMode, digitalWrite, getPins } from "../../electron/modules/firmata";
+import * as usbDetection from "../../electron/modules/usb-detection"
 
 export function sendToClient(win: BrowserWindow, channel = "", data) {
   win.webContents.send(channel, data);
@@ -62,7 +63,9 @@ export function handleArduino() {
     return await errorHandle(async () => await getBoards(), error);
   });
 }
-
+/*************************************************************************************/
+/* Firmata API */
+/*************************************************************************************/
 export function handleFirmata() {
   ipcMain.handle(CH.FIRMATA.CONNECT, async (_evt, payload) => {
     const error: IError = {
@@ -99,5 +102,44 @@ export function handleFirmata() {
       channel: CH.FIRMATA.GET_PINS,
     };
     return await errorHandle(async () => getPins(), error);
+  });
+}
+
+/*************************************************************************************/
+/* USB detection API */
+/*************************************************************************************/
+export function handleUsbDetection(win: BrowserWindow) {
+
+  usbDetection.start();
+  usbDetection.onChange(() => {
+    sendToClient(win, CH.USB_DETECTION.ON_CHANGE, true)
+  })
+
+  ipcMain.handle(CH.USB_DETECTION.START, async (_evt) => {
+    const error: IError = {
+      code: 0,
+      message: "Error during start usb detection",
+      type: "serialport",
+      channel: CH.USB_DETECTION.START,
+    };
+    return await errorHandle(async () => usbDetection.start(), error);
+  });
+  ipcMain.handle(CH.USB_DETECTION.STOP, async (_evt) => {
+    const error: IError = {
+      code: 0,
+      message: "Error during stop usb detection",
+      type: "serialport",
+      channel: CH.USB_DETECTION.STOP,
+    };
+    return await errorHandle(async () => usbDetection.stop(), error);
+  });
+  ipcMain.handle(CH.USB_DETECTION.ON_CHANGE, async (_evt) => {
+    const error: IError = {
+      code: 0,
+      message: "Error during stop usb detection",
+      type: "serialport",
+      channel: CH.USB_DETECTION.STOP,
+    };
+    return await errorHandle(async () => usbDetection.stop(), error);
   });
 }
