@@ -26,7 +26,8 @@ export const useMainStore = defineStore("counter", {
     selectedPort: null,
     pins: [],
     loading:{
-      connect: false
+      connect: false,
+      fetchingPorts: false
     }
   }),
 
@@ -36,13 +37,17 @@ export const useMainStore = defineStore("counter", {
       onChangeUsbDevices(this.fetchAvailableBoards)
     },
     async fetchAvailableBoards() {
+      this.loading.fetchingPorts = true
       try {
         this.availableBoards = await getBoards();
+        this.selectedPort = this.availableBoards && this.availableBoards[0] 
       } catch (e:any) {
         console.error("--- ERROR FETCHING BOARDS ---");
         console.table(e)
         showMessageBox({message: e?.message, title: "Error", detail:e?.details})
       }
+      this.loading.fetchingPorts = false
+
     },
     async connectToBoard(){
       this.loading.connect = true

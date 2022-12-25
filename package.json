@@ -16,12 +16,14 @@
   },
   "dependencies": {
     "@mdi/font": "7.0.96",
+    "@types/webfontloader": "^1.6.35",
     "firmata": "^2.3.0",
     "lodash": "^4.17.21",
     "pinia": "^2.0.28",
     "ramda": "^0.28.0",
     "roboto-fontface": "*",
     "usb-detection": "^4.14.1",
+    "vite-plugin-electron-builder": "^0.1.0",
     "vue-router": "4",
     "vuetify": "^3.0.4",
     "webfontloader": "^1.0.0"

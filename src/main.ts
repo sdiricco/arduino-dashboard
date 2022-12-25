@@ -20,3 +20,7 @@ router.isReady().then(() => {
     postMessage({ payload: "removeLoading" }, "*");
   });
 });
+
+process.on('unhandledRejection', (error) => {
+  console.error(error)
+})
