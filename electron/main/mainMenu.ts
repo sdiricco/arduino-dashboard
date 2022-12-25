@@ -1,6 +1,5 @@
 ////////////////////////////////////// Global Requires \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 import { Menu } from "electron";
-import * as R from "ramda";
 import _ from "lodash";
 import { arrayToTree, treeToArray } from "../utils";
 
@@ -106,8 +105,8 @@ export function create(win, onClickItem) {
       ]
     }
   ];
-  template = R.clone(__template);
-  defaultTemplate = R.clone(__template);
+  template = _.cloneDeep(__template);
+  defaultTemplate = _.cloneDeep(__template);
   buildMenuFromTemplate(window, template); 
 }
 
