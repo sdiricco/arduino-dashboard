@@ -40,7 +40,8 @@ export const useMainStore = defineStore("counter", {
       this.loading.fetchingPorts = true
       try {
         this.availableBoards = await getBoards();
-        this.selectedPort = this.availableBoards && this.availableBoards[0] 
+        this.selectedPort = this.availableBoards && this.availableBoards.find(p => p && p.matching_boards) || null;
+        console.log(this.selectedPort);
       } catch (e:any) {
         console.error("--- ERROR FETCHING BOARDS ---");
         console.table(e)

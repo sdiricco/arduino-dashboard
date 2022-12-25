@@ -14,7 +14,30 @@
             item-title="port.address"
             item-value="port"
             return-object
-            :items="store.availableBoards"></v-select>
+            :items="store.availableBoards"
+            :menu="showMenu"
+            @update:menu="() => showMenu = !showMenu"
+          >
+            <template #selection="{item}" @click="()=> log('hey')">
+              {{ item && item.raw && item.raw.matching_boards && item.raw.matching_boards[0] && item.raw.matching_boards[0].name || 'unknown' }}
+            </template>
+            <template #item="{ item }">
+              <v-list-item
+                :value="item && item.raw"
+                :title="(item && item.raw && item.raw.matching_boards && item.raw.matching_boards[0] && item.raw.matching_boards[0].name) || 'unknown'"
+                @click="() => (store.selectedPort= item.raw)"
+              >
+                <template #title="{ title }">
+                  {{ title }}
+                </template>
+                <div class="d-flex align-center">
+                  <v-icon icon="mdi-usb" size="x-small" class="mr-1"></v-icon>
+                  <div class="text-body-2"><code>{{ item && item.raw && item.raw.port && item.raw.port.address }}</code></div>
+                
+                </div>
+              </v-list-item>
+            </template>
+          </v-select>
         </div>
       </div>
     </v-app-bar>
@@ -23,25 +46,23 @@
       <div class="snack">
         <v-sheet v-if="store.loading.fetchingPorts" class="pa-2 mt-2 px-4">Fetching ports..</v-sheet>
       </div>
-
     </v-main>
     <v-footer height="24px" app class="d-flex justify-space-between pa-1 px-4" color="secondary">
-
-      <div class="text-caption"><code>0.0.1</code></div>
-      <div class="d-flex align-center text-caption" v-if="store.loading.connect">
+      <div class="text-body-1">0.0.1</div>
+      <div class="d-flex align-center text-body-1" v-if="store.loading.connect">
         <v-progress-circular indeterminate class="mr-4" size="x-small"></v-progress-circular>
-        <code>{{ `Connecting to ${store.selectedPort?.port.address}` }}</code>
+        <div>{{ `Connecting to ${store.selectedPort?.port.address}` }}</div>
       </div>
-      <div class="d-flex align-center text-caption" v-else-if="store.loading.fetchingPorts">
+      <div class="d-flex align-center text-body-1" v-else-if="store.loading.fetchingPorts">
         <v-progress-circular indeterminate class="mr-4" size="x-small"></v-progress-circular>
-        <code>{{ `Fetching ports..` }}</code>
+        <div>{{ `Fetching ports..` }}</div>
       </div>
     </v-footer>
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useMainStore } from "./store/main";
 const store = useMainStore();
 
@@ -51,6 +72,11 @@ async function onClickConnect() {
 }
 
 const open = ref(true);
+const showMenu = ref(false);
+
+function log(message: any) {
+  console.log(message);
+}
 
 onMounted(async () => {
   await store.startUp();
@@ -64,10 +90,10 @@ html {
 </style>
 
 <style scoped>
-.snack{
+.snack {
   position: absolute;
   bottom: 32px;
-  right: 8px
+  right: 8px;
 }
 .w200 {
   min-width: 200px;
