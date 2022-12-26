@@ -35,6 +35,7 @@ export const CH = {
   },
   FIRMATA: {
     CONNECT: "firmata/connect",
+    DISCONNECT: "firmata/disconnect",
     PIN_MODE: "firmata/pin-mode",
     DIGITAL_WRITE: "firmata/digital-write",
     GET_PINS: "firmata/get-pins"

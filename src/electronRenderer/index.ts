@@ -22,6 +22,10 @@ export async function connect(payload:any): Promise<any>{
   return await errorHandle(async () => ipcRenderer.invoke(CH.FIRMATA.CONNECT, payload))
 }
 
+export async function disconnect(): Promise<any>{
+  return await errorHandle(async () => ipcRenderer.invoke(CH.FIRMATA.DISCONNECT))
+}
+
 export async function pinMode(payload:any): Promise<any>{
   return await errorHandle(async () => ipcRenderer.invoke(CH.FIRMATA.PIN_MODE, payload))
 }
@@ -44,9 +48,11 @@ export async function onMenuAction(callback: Function){
   })
 }
 
-export async function onChangeUsbDevices(callback: Function){
-  ipcRenderer.on(CH.USB_DETECTION.ON_CHANGE, (_evt:any, data:any)=> {
-    callback(data);
-  })
+export async function onListeningUsbDevicesChanges(callback: (evt:any, data:any)=>void){
+  ipcRenderer.on(CH.USB_DETECTION.ON_CHANGE, callback)
+}
+
+export async function offListeningUsbDevicesChanges(callback: (evt:any, data:any)=>void){
+  ipcRenderer.off(CH.USB_DETECTION.ON_CHANGE, callback)
 }
 

@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, dialog } from "electron";
 import { IError, CH } from "../types";
 import { errorHandle } from "./errorHandle";
 import { getBoards } from "../../electron/modules/arduino";
-import { connect, pinMode, digitalWrite, getPins } from "../../electron/modules/firmata";
+import { connect, disconnect, pinMode, digitalWrite, getPins } from "../../electron/modules/firmata";
 import * as usbDetection from "../../electron/modules/usb-detection"
 
 export function sendToClient(win: BrowserWindow, channel = "", data) {
@@ -75,6 +75,15 @@ export function handleFirmata() {
       channel: CH.FIRMATA.CONNECT,
     };
     return await errorHandle(async () => await connect(payload), error);
+  });
+  ipcMain.handle(CH.FIRMATA.DISCONNECT, async () => {
+    const error: IError = {
+      code: 0,
+      message: "Error during disconnect to firmata",
+      type: "firmata",
+      channel: CH.FIRMATA.DISCONNECT,
+    };
+    return await errorHandle(async () => await disconnect(), error);
   });
   ipcMain.handle(CH.FIRMATA.PIN_MODE, async (_evt, data) => {
     const error: IError = {

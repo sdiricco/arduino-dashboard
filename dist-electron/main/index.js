@@ -14,6 +14,7 @@ const CH = {
   },
   FIRMATA: {
     CONNECT: "firmata/connect",
+    DISCONNECT: "firmata/disconnect",
     PIN_MODE: "firmata/pin-mode",
     DIGITAL_WRITE: "firmata/digital-write",
     GET_PINS: "firmata/get-pins"
@@ -56,23 +57,81 @@ async function getBoards() {
 const Firmata = require("firmata");
 let firmata = null;
 function connect(path2) {
-  console.log("[FIRMATA:CONNECT]", `path ${path2}`);
+  console.log(`[FIRMATA:CONNECTING] > path ${path2}`);
   return new Promise(async (res, rej) => {
-    firmata = new Firmata(path2, async (e) => {
-      e ? rej(e) : res(true);
-    });
+    const onFirmata = (e) => {
+      if (e) {
+        console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path2}: ${e}`);
+        rej(e);
+      }
+      console.log(`[FIRMATA:CONNECTED] > Connected to ${path2}`);
+      res(getState());
+    };
+    try {
+      firmata = new Firmata(path2, onFirmata);
+    } catch (e) {
+      console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path2}: ${e}`);
+      rej(e);
+    }
   });
 }
+async function disconnect() {
+  return new Promise(async (res, rej) => {
+    try {
+      if (!firmata || !firmata.transport || !(firmata == null ? void 0 : firmata.versionReceived) || !(firmata == null ? void 0 : firmata.isReady) || !firmata.transport) {
+        console.log(`[FIRMATA:DISCONNECTED] > Not disconnected beacuse already disconnected.. Firmata instance does not exsist`);
+        firmata = null;
+        res(true);
+        return;
+      }
+      firmata.transport.close((e) => {
+        if (e) {
+          console.error(`[FIRMATA:WARN_DISCONNECTING] > ${e}`);
+        }
+        console.log(`[FIRMATA:DISCONNECTED] > Disconnection succesfully`);
+      });
+    } catch (e) {
+      console.log(`[FIRMATA:WARN_DISCONNECTING] > Error disconnecting ${e}`);
+    }
+    firmata = null;
+    res(true);
+    return;
+  });
+}
+function getState() {
+  var _a;
+  try {
+    const state = {
+      versionReceived: firmata == null ? void 0 : firmata.versionReceived,
+      isReady: firmata == null ? void 0 : firmata.isReady,
+      path: (_a = firmata == null ? void 0 : firmata.transport) == null ? void 0 : _a.path,
+      pins: firmata == null ? void 0 : firmata.pins
+    };
+    return state;
+  } catch (e) {
+    throw e;
+  }
+}
 function getPins() {
-  return firmata.pins;
+  let pins = [];
+  try {
+    console.log(`[FIRMATA:GET_PINS] > pins`, pins);
+    pins = firmata.pins;
+  } catch (e) {
+    console.error(`[FIRMATA:ERROR_GET_PINS] > Error during get pins ${e}`);
+    throw e;
+  }
+  return pins;
 }
 function pinMode({ pin = null, mode = null }) {
   try {
     console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
     firmata.pinMode(pin, mode);
   } catch (e) {
-    console.error("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
+    console.error("[FIRMATA:ERROR_PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
+    throw e;
   }
+  return true;
 }
 function digitalWrite({ pin = null, value = null }) {
   try {
@@ -80,6 +139,7 @@ function digitalWrite({ pin = null, value = null }) {
     firmata.digitalWrite(pin, value);
   } catch (e) {
     console.error("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
+    throw e;
   }
 }
 var usbDetect = require("usb-detection");
@@ -146,6 +206,15 @@ function handleFirmata() {
       channel: CH.FIRMATA.CONNECT
     };
     return await errorHandle(async () => await connect(payload), error);
+  });
+  electron.ipcMain.handle(CH.FIRMATA.DISCONNECT, async () => {
+    const error = {
+      code: 0,
+      message: "Error during disconnect to firmata",
+      type: "firmata",
+      channel: CH.FIRMATA.DISCONNECT
+    };
+    return await errorHandle(async () => await disconnect(), error);
   });
   electron.ipcMain.handle(CH.FIRMATA.PIN_MODE, async (_evt, data) => {
     const error = {

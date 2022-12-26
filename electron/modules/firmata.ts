@@ -3,36 +3,92 @@ const Firmata = require("firmata");
 export let firmata = null;
 
 export function connect(path?: string) {
-  console.log('[FIRMATA:CONNECT]', `path ${path}`)
+  console.log(`[FIRMATA:CONNECTING] > path ${path}`);
   return new Promise(async (res, rej) => {
-    firmata = new Firmata(path, async(e) => {
-      e ? rej(e) :res(true)
-    });
+    const onFirmata = (e: any) => {
+      if (e) {
+        console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path}: ${e}`);
+        rej(e);
+      }
+      console.log(`[FIRMATA:CONNECTED] > Connected to ${path}`);
+      res(getState());
+    };
+    try {
+      firmata = new Firmata(path, onFirmata);
+    } catch (e) {
+      console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path}: ${e}`);
+      rej(e);
+    }
   });
 }
 
-export function getPins(){
-  return firmata.pins;
+export async function disconnect() {
+  return new Promise(async (res, rej) => {
+    try {
+      if (!firmata || !firmata.transport || !firmata?.versionReceived || !firmata?.isReady || !firmata.transport) {
+        console.log(`[FIRMATA:DISCONNECTED] > Not disconnected beacuse already disconnected.. Firmata instance does not exsist`);
+        firmata = null;
+        res(true);
+        return
+      }
+      firmata.transport.close((e: any) => {
+        if (e) {
+          console.error(`[FIRMATA:WARN_DISCONNECTING] > ${e}`);
+        }
+        console.log(`[FIRMATA:DISCONNECTED] > Disconnection succesfully`);
+      });
+    } catch (e:any) {
+      console.log(`[FIRMATA:WARN_DISCONNECTING] > Error disconnecting ${e}`);
+    }
+    firmata = null;
+    res(true);
+    return
+  });
 }
 
-export function pinMode({pin = null, mode = null}) {
+export function getState(){
   try {
-    console.log('[FIRMATA:PIN_MODE]', `pin ${pin}`, `mode ${mode}`)
+    const state = {
+      versionReceived: firmata?.versionReceived,
+      isReady: firmata?.isReady,
+      path: firmata?.transport?.path,
+      pins: firmata?.pins,
+    }
+    return state;
+  } catch (e) {
+    throw(e)
+  }
+}
+
+export function getPins() {
+  let pins = [];
+  try {
+    console.log(`[FIRMATA:GET_PINS] > pins`, pins);
+    pins = firmata.pins;
+  } catch (e) {
+    console.error(`[FIRMATA:ERROR_GET_PINS] > Error during get pins ${e}`);
+    throw e;
+  }
+  return pins;
+}
+
+export function pinMode({ pin = null, mode = null }) {
+  try {
+    console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
     firmata.pinMode(pin, mode);
   } catch (e) {
-    console.error('[FIRMATA:PIN_MODE]', `pin ${pin}`, `mode ${mode}`)
+    console.error("[FIRMATA:ERROR_PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
+    throw e;
   }
-
+  return true;
 }
 
-export function digitalWrite({pin = null, value = null}){
-
+export function digitalWrite({ pin = null, value = null }) {
   try {
-    console.log('[FIRMATA:DIGITAL_WRITE]', `pin ${pin}`, `value ${value}`)
+    console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
     firmata.digitalWrite(pin, value);
   } catch (e) {
-    console.error('[FIRMATA:DIGITAL_WRITE]', `pin ${pin}`, `value ${value}`)
+    console.error("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
+    throw e;
   }
-
 }
-

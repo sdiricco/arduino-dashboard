@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import {getBoards, connect, pinMode, getPins, onChangeUsbDevices, showMessageBox} from "../electronRenderer"
+import {getBoards, connect, pinMode, getPins, onListeningUsbDevicesChanges, offListeningUsbDevicesChanges, showMessageBox, disconnect} from "../electronRenderer"
 
 interface IPort {
   address: string,
@@ -10,14 +10,21 @@ interface IPort {
 
 }
 interface IBoard {
-  matching_boards: Array<string>,
+  matching_boards: Array<any>,
   port: IPort
 }
 interface IState {
   availableBoards: Array<IBoard>,
   selectedPort: IBoard | null,
   pins: Array<any>,
-  loading: any
+  isConnecting: boolean,
+  isFetchingPort: boolean,
+  board: {
+    versionReceived: boolean,
+    isReady: boolean,
+    path: string,
+    pins: Array<any>,
+  }
 }
 
 export const useMainStore = defineStore("counter", {
@@ -25,60 +32,68 @@ export const useMainStore = defineStore("counter", {
     availableBoards: [],
     selectedPort: null,
     pins: [],
-    loading:{
-      connect: false,
-      fetchingPorts: false
+    isConnecting: false,
+    isFetchingPort: false,
+    board: {
+      versionReceived: false,
+      isReady: false,
+      path: '',
+      pins: [],
     }
   }),
 
   actions: {
-    async startUp(){
-      await this.fetchAvailableBoards();
-      onChangeUsbDevices(this.fetchAvailableBoards)
-    },
     async fetchAvailableBoards() {
-      this.loading.fetchingPorts = true
+      this.isFetchingPort = true;
       try {
         this.availableBoards = await getBoards();
-        this.selectedPort = this.availableBoards && this.availableBoards.find(p => p && p.matching_boards) || null;
-        console.log(this.selectedPort);
+        this.isFetchingPort = false;
       } catch (e:any) {
+        this.isFetchingPort = false;
+        console.log(e)
         console.error("--- ERROR FETCHING BOARDS ---");
-        console.table(e)
-        showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+        console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
+        throw(e);
       }
-      this.loading.fetchingPorts = false
-
     },
     async connectToBoard(){
-      this.loading.connect = true
+      this.isConnecting = true
       try {
         const port = this.selectedPort && this.selectedPort.port && this.selectedPort.port.address || null
-        await connect(port);
-        this.pins = await getPins();
+        this.board = await connect(port);
+        this.pins = this.board.pins;
+        this.isConnecting = false
       } catch (e:any) {
+        this.isConnecting = false
         console.error("--- ERROR CONNECTING TO BOARD ---");
-        console.table(e);
-        showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+        console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
+        throw(e);
       }
-      this.loading.connect = false
     },
     async disconnectBoard(){
-
+      try {
+        await disconnect();
+        this.pins = [];
+        this.board.isReady = false
+        this.board.path = ''
+        this.board.versionReceived = false;
+        this.board.pins = [];
+      } catch (e:any) {
+        console.error("--- ERROR DISCONNECTING TO BOARD ---");
+        console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
+        throw(e);
+      }
     },
     async setAllPinsAsOutput(){
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < this.pins.length; i++) {
         try {
           await pinMode({ pin: i, mode: 0x01 });
         } catch (e:any) {
           console.error("--- ERROR SET PIN AS OUTPUT ---");
-          console.table(e)
-          showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+          console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
+          throw(e);
         }
       }
-      this.pins = await getPins();
-      console.log(this.pins)
-
     }
   },
 });
