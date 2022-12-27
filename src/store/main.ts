@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import {getBoards, connect, pinMode, getPins, onListeningUsbDevicesChanges, offListeningUsbDevicesChanges, showMessageBox, disconnect} from "../electronRenderer"
+import {getBoards, connect, pinMode, disconnect} from "../electronRenderer"
 
 interface IPort {
   address: string,
@@ -7,10 +7,14 @@ interface IPort {
   protocol: string,
   protocol_label: string,
   properties: any
+}
 
+interface IMatchingBoards {
+  name: string,
+  fqba: string,
 }
 interface IBoard {
-  matching_boards: Array<any>,
+  matching_boards: Array<IMatchingBoards>,
   port: IPort
 }
 interface IState {
