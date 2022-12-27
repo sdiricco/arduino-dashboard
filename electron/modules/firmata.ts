@@ -3,20 +3,14 @@ const Firmata = require("firmata");
 export let firmata = null;
 
 export function connect(path?: string) {
-  console.log(`[FIRMATA:CONNECTING] > path ${path}`);
   return new Promise(async (res, rej) => {
     const onFirmata = (e: any) => {
-      if (e) {
-        console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path}: ${e}`);
-        rej(e);
-      }
-      console.log(`[FIRMATA:CONNECTED] > Connected to ${path}`);
-      res(getState());
+      e && rej(e);
+      res(getState())
     };
     try {
       firmata = new Firmata(path, onFirmata);
     } catch (e) {
-      console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path}: ${e}`);
       rej(e);
     }
   });
@@ -32,17 +26,12 @@ export async function disconnect() {
         return
       }
       firmata.transport.close((e: any) => {
-        if (e) {
-          console.error(`[FIRMATA:WARN_DISCONNECTING] > ${e}`);
-        }
-        console.log(`[FIRMATA:DISCONNECTED] > Disconnection succesfully`);
+        res(true);
+        return;
       });
     } catch (e:any) {
       console.log(`[FIRMATA:WARN_DISCONNECTING] > Error disconnecting ${e}`);
     }
-    firmata = null;
-    res(true);
-    return
   });
 }
 
@@ -63,7 +52,7 @@ export function getState(){
 export function getPins() {
   let pins = [];
   try {
-    console.log(`[FIRMATA:GET_PINS] > pins`, pins);
+    console.log(`[FIRMATA:GET_PINS]`);
     pins = firmata.pins;
   } catch (e) {
     console.error(`[FIRMATA:ERROR_GET_PINS] > Error during get pins ${e}`);

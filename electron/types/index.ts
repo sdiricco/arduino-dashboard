@@ -1,5 +1,3 @@
-import * as electron from "electron";
-
 export interface IError {
   code?: null | number;
   message?: null | string;
@@ -11,11 +9,6 @@ export interface IError {
 export interface IIPC {
     error?: IError;
     data?: any
-}
-
-export interface IShowMessageBoxReturnValue {
-  data: electron.MessageBoxReturnValue,
-  error: IError
 }
 
 export const CH = {
@@ -39,8 +32,6 @@ export const CH = {
     GET_PORTS: "serialport/get-ports"
   },
   USB_DETECTION: {
-    START: "usb-detection/start",
-    STOP: "usb-detection/stop",
     ON_CHANGE: "usb-detection/on-change",
   }
 }
