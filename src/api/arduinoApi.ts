@@ -1,8 +1,10 @@
 import { ipcRenderer } from "electron";
 import { CH } from "../types";
-import { errorHandle } from "./errorHandle"
+import { ElectronError, raiseError } from "./errorHandle"
 
 /* ARDUINO API */
 export async function getBoards(): Promise<any>{
-  return await errorHandle(async () =>  ipcRenderer.invoke(CH.ARDUINO.GET_BOARDS))
+  const response = await ipcRenderer.invoke(CH.ARDUINO.GET_BOARDS);
+  response.error && raiseError(new ElectronError(response.error));
+  return response.data;
 }

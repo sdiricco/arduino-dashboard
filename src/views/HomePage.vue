@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { digitalWrite  } from "../api";
+import { digitalWrite } from "../api/firmataApi"
 import {showMessageBox} from "../api/electronApi"
 import { useMainStore } from "../store/main";
 

@@ -1,35 +1,8 @@
 import { defineStore } from "pinia";
-import { connect, pinMode, disconnect } from "../api"
+import { connect, pinMode, disconnect } from "../api/firmataApi" 
 import { getBoards } from "../api/arduinoApi"
+import { IState } from "../types/mainStore"
 
-interface IPort {
-  address: string,
-  label: string,
-  protocol: string,
-  protocol_label: string,
-  properties: any
-}
-
-interface IMatchingBoards {
-  name: string,
-  fqba: string,
-}
-interface IBoard {
-  matching_boards: Array<IMatchingBoards>,
-  port: IPort
-}
-interface IState {
-  availableBoards: Array<IBoard>,
-  selectedPort: IBoard | null,
-  isConnecting: boolean,
-  isFetchingPort: boolean,
-  board: {
-    versionReceived: boolean,
-    isReady: boolean,
-    path: string,
-    pins: Array<any>,
-  }
-}
 
 export const useMainStore = defineStore("counter", {
   state: ():IState => ({ 

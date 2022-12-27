@@ -23,20 +23,9 @@ const CH = {
     GET_PORTS: "serialport/get-ports"
   },
   USB_DETECTION: {
-    START: "usb-detection/start",
-    STOP: "usb-detection/stop",
     ON_CHANGE: "usb-detection/on-change"
   }
 };
-async function errorHandle(fn, error) {
-  const result = {};
-  try {
-    result.data = await fn();
-  } catch (e) {
-    result.error = { ...{ details: e.message }, ...error };
-  }
-  return result;
-}
 const { spawn } = require("child_process");
 function execute(command, args) {
   return new Promise((res) => {
@@ -57,20 +46,14 @@ async function getBoards() {
 const Firmata = require("firmata");
 let firmata = null;
 function connect(path2) {
-  console.log(`[FIRMATA:CONNECTING] > path ${path2}`);
   return new Promise(async (res, rej) => {
     const onFirmata = (e) => {
-      if (e) {
-        console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path2}: ${e}`);
-        rej(e);
-      }
-      console.log(`[FIRMATA:CONNECTED] > Connected to ${path2}`);
+      e && rej(e);
       res(getState());
     };
     try {
       firmata = new Firmata(path2, onFirmata);
     } catch (e) {
-      console.error(`[FIRMATA:ERROR_CONNECTING] > Error connecting to ${path2}: ${e}`);
       rej(e);
     }
   });
@@ -85,17 +68,12 @@ async function disconnect() {
         return;
       }
       firmata.transport.close((e) => {
-        if (e) {
-          console.error(`[FIRMATA:WARN_DISCONNECTING] > ${e}`);
-        }
-        console.log(`[FIRMATA:DISCONNECTED] > Disconnection succesfully`);
+        res(true);
+        return;
       });
     } catch (e) {
       console.log(`[FIRMATA:WARN_DISCONNECTING] > Error disconnecting ${e}`);
     }
-    firmata = null;
-    res(true);
-    return;
   });
 }
 function getState() {
@@ -115,7 +93,7 @@ function getState() {
 function getPins() {
   let pins = [];
   try {
-    console.log(`[FIRMATA:GET_PINS] > pins`, pins);
+    console.log(`[FIRMATA:GET_PINS]`);
     pins = firmata.pins;
   } catch (e) {
     console.error(`[FIRMATA:ERROR_GET_PINS] > Error during get pins ${e}`);
@@ -146,135 +124,160 @@ var usbDetect = require("usb-detection");
 function start() {
   usbDetect.startMonitoring();
 }
-function stop() {
-  usbDetect.stopMonitoring();
-}
 function onChange(callback) {
   usbDetect.on("change", callback);
 }
 function sendToClient(win2, channel = "", data) {
   win2.webContents.send(channel, data);
 }
+const ELECTRON_TYPE = "electron";
 function handleDialogs(win2) {
   electron.ipcMain.handle(CH.ELECTRON.SHOW_MESSAGE_BOX, async (_evt, data) => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during opening message box dialog electron API",
-      type: "electron",
+      type: ELECTRON_TYPE,
       channel: CH.ELECTRON.SHOW_MESSAGE_BOX
     };
-    return await errorHandle(async () => {
-      await electron.dialog.showMessageBox(win2, data);
-    }, error);
+    try {
+      result.data = await electron.dialog.showMessageBox(win2, data);
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
   electron.ipcMain.handle(CH.ELECTRON.SHOW_SAVE_DIALOG, async (_evt, data) => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during opening saving dialog electron API",
-      type: "electron",
+      type: ELECTRON_TYPE,
       channel: CH.ELECTRON.SHOW_SAVE_DIALOG
     };
-    return await errorHandle(async () => await electron.dialog.showSaveDialog(win2, data), error);
+    try {
+      result.data = await electron.dialog.showSaveDialog(win2, data);
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
   electron.ipcMain.handle(CH.ELECTRON.SHOW_OPEN_DIALOG, async (_evt, data) => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during opening message open dialog electron API",
-      type: "electron",
+      type: ELECTRON_TYPE,
       channel: CH.ELECTRON.SHOW_OPEN_DIALOG
     };
-    return await errorHandle(async () => await electron.dialog.showOpenDialog(win2, data), error);
+    try {
+      result.data = await electron.dialog.showOpenDialog(win2, data);
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
 }
+const ARDUINO_TYPE = "arduino";
 function handleArduino() {
   electron.ipcMain.handle(CH.ARDUINO.GET_BOARDS, async (_evt) => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during get arduino boards",
-      type: "arduino",
+      type: ARDUINO_TYPE,
       channel: CH.ARDUINO.GET_BOARDS
     };
-    return await errorHandle(async () => await getBoards(), error);
+    try {
+      result.data = await getBoards();
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
 }
+const FIRMATA_TYPE = "firmata";
 function handleFirmata() {
   electron.ipcMain.handle(CH.FIRMATA.CONNECT, async (_evt, payload) => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during connect to firmata",
-      type: "firmata",
+      type: FIRMATA_TYPE,
       channel: CH.FIRMATA.CONNECT
     };
-    return await errorHandle(async () => await connect(payload), error);
+    try {
+      result.data = await connect(payload);
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
   electron.ipcMain.handle(CH.FIRMATA.DISCONNECT, async () => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during disconnect to firmata",
-      type: "firmata",
+      type: FIRMATA_TYPE,
       channel: CH.FIRMATA.DISCONNECT
     };
-    return await errorHandle(async () => await disconnect(), error);
-  });
-  electron.ipcMain.handle(CH.FIRMATA.PIN_MODE, async (_evt, data) => {
-    const error = {
-      code: 0,
-      message: "Error during executing pinMode firmata function",
-      type: "firmata",
-      channel: CH.FIRMATA.PIN_MODE
-    };
-    return await errorHandle(async () => pinMode(data), error);
-  });
-  electron.ipcMain.handle(CH.FIRMATA.DIGITAL_WRITE, async (_evt, data) => {
-    const error = {
-      code: 0,
-      message: "Error during executing digitalWrite firmata function",
-      type: "firmata",
-      channel: CH.FIRMATA.DIGITAL_WRITE
-    };
-    return await errorHandle(async () => digitalWrite(data), error);
+    try {
+      result.data = await disconnect();
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
   electron.ipcMain.handle(CH.FIRMATA.GET_PINS, async () => {
+    const result = {};
     const error = {
       code: 0,
       message: "Error during executing getPins firmata function",
-      type: "firmata",
+      type: FIRMATA_TYPE,
       channel: CH.FIRMATA.GET_PINS
     };
-    return await errorHandle(async () => getPins(), error);
+    try {
+      result.data = getPins();
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
+  });
+  electron.ipcMain.handle(CH.FIRMATA.PIN_MODE, async (_evt, data) => {
+    const result = {};
+    const error = {
+      code: 0,
+      message: "Error during executing pinMode firmata function",
+      type: FIRMATA_TYPE,
+      channel: CH.FIRMATA.PIN_MODE
+    };
+    try {
+      result.data = pinMode(data);
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
+  });
+  electron.ipcMain.handle(CH.FIRMATA.DIGITAL_WRITE, async (_evt, data) => {
+    const result = {};
+    const error = {
+      code: 0,
+      message: "Error during executing digitalWrite firmata function",
+      type: FIRMATA_TYPE,
+      channel: CH.FIRMATA.DIGITAL_WRITE
+    };
+    try {
+      result.data = digitalWrite(data);
+    } catch (e) {
+      result.error = { ...{ details: e.message }, ...error };
+    }
+    return result;
   });
 }
 function handleUsbDetection(win2) {
   start();
   onChange(() => {
     sendToClient(win2, CH.USB_DETECTION.ON_CHANGE, true);
-  });
-  electron.ipcMain.handle(CH.USB_DETECTION.START, async (_evt) => {
-    const error = {
-      code: 0,
-      message: "Error during start usb detection",
-      type: "serialport",
-      channel: CH.USB_DETECTION.START
-    };
-    return await errorHandle(async () => start(), error);
-  });
-  electron.ipcMain.handle(CH.USB_DETECTION.STOP, async (_evt) => {
-    const error = {
-      code: 0,
-      message: "Error during stop usb detection",
-      type: "serialport",
-      channel: CH.USB_DETECTION.STOP
-    };
-    return await errorHandle(async () => stop(), error);
-  });
-  electron.ipcMain.handle(CH.USB_DETECTION.ON_CHANGE, async (_evt) => {
-    const error = {
-      code: 0,
-      message: "Error during stop usb detection",
-      type: "serialport",
-      channel: CH.USB_DETECTION.STOP
-    };
-    return await errorHandle(async () => stop(), error);
   });
 }
 function onWindowCreated(window) {

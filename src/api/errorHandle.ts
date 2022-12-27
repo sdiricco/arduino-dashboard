@@ -1,15 +1,6 @@
-export async function errorHandle(fn: Function) {
-  try {
-    const response = await fn();
-    if (response.error) {
-      throw new ElectronError(response.error);
-    }
-    return response.data;
-  } catch (e: any) {
-    throw new ElectronError(e);
-  }
+export function raiseError(e: any) {
+  throw(e);
 }
-
 export class ElectronError extends Error {
   name: string;
   details?: string;
