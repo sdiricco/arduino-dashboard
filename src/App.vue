@@ -32,7 +32,8 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from "vue";
 import { useMainStore } from "./store/main";
-import {showMessageBox, onListeningUsbDevicesChanges, offListeningUsbDevicesChanges} from "./electronRenderer"
+import { onListeningUsbDevicesChanges, offListeningUsbDevicesChanges} from "./api"
+import {showMessageBox} from "./api/electronApi"
 import PortSelect from "./components/PortSelect.vue"
 const store = useMainStore();
 

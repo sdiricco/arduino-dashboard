@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
-import {getBoards, connect, pinMode, getPins, onListeningUsbDevicesChanges, offListeningUsbDevicesChanges, showMessageBox, disconnect} from "../electronRenderer"
+import { connect, pinMode, disconnect } from "../api"
+import { getBoards } from "../api/arduinoApi"
 
 interface IPort {
   address: string,
@@ -16,7 +17,6 @@ interface IBoard {
 interface IState {
   availableBoards: Array<IBoard>,
   selectedPort: IBoard | null,
-  pins: Array<any>,
   isConnecting: boolean,
   isFetchingPort: boolean,
   board: {
@@ -31,7 +31,6 @@ export const useMainStore = defineStore("counter", {
   state: ():IState => ({ 
     availableBoards: [],
     selectedPort: null,
-    pins: [],
     isConnecting: false,
     isFetchingPort: false,
     board: {
@@ -41,6 +40,11 @@ export const useMainStore = defineStore("counter", {
       pins: [],
     }
   }),
+
+  getters: {
+    getBoardName: (state) => state.selectedPort?.matching_boards[0]?.name || 'Unknown',
+    getBoardPath: (state) => state.selectedPort?.port.address
+  },
 
   actions: {
     async fetchAvailableBoards() {
@@ -61,7 +65,6 @@ export const useMainStore = defineStore("counter", {
       try {
         const port = this.selectedPort && this.selectedPort.port && this.selectedPort.port.address || null
         this.board = await connect(port);
-        this.pins = this.board.pins;
         this.isConnecting = false
       } catch (e:any) {
         this.isConnecting = false
@@ -73,7 +76,6 @@ export const useMainStore = defineStore("counter", {
     async disconnectBoard(){
       try {
         await disconnect();
-        this.pins = [];
         this.board.isReady = false
         this.board.path = ''
         this.board.versionReceived = false;
@@ -85,7 +87,7 @@ export const useMainStore = defineStore("counter", {
       }
     },
     async setAllPinsAsOutput(){
-      for (let i = 0; i < this.pins.length; i++) {
+      for (let i = 0; i < this.board.pins.length; i++) {
         try {
           await pinMode({ pin: i, mode: 0x01 });
         } catch (e:any) {

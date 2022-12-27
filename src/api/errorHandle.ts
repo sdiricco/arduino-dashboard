@@ -12,9 +12,9 @@ export async function errorHandle(fn: Function) {
 
 export class ElectronError extends Error {
   name: string;
-  details: string;
-  type: string;
-  code: number;
+  details?: string;
+  type?: string;
+  code?: number;
 
   constructor({ message = '', details = "", type = "", code = 0 } = {}) {
     super(message);
