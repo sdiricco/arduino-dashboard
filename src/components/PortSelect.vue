@@ -8,7 +8,7 @@
     item-title="port.address"
     item-value="port"
     return-object
-    :items="store.availableBoards"
+    :items="store.availablePorts"
     :menu="showMenu"
     @update:menu="() => (showMenu = !showMenu)"
   >

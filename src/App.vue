@@ -2,8 +2,8 @@
   <v-app class="overfloy-y-auto">
     <v-app-bar density="comfortable" app>
       <div fluid class="d-flex align-center overflow-x-auto px-4">
-        <v-btn :disabled="store.isConnecting || store.isFetchingPort" icon="mdi-power-plug" variant="outlined" size="small" @click="onClickConnect"></v-btn>
-        <v-btn :disabled="store.isConnecting || store.isFetchingPort" icon="mdi-power-plug-off" class="mr-2" variant="outlined" size="small" @click="onClickDisconnect"></v-btn>
+        <v-btn :disabled="isLoading" icon="mdi-power-plug" variant="outlined" size="small" @click="onClickConnect"></v-btn>
+        <v-btn :disabled="isLoading" icon="mdi-power-plug-off" class="mr-2" variant="outlined" size="small" @click="onClickDisconnect"></v-btn>
         <div class="w200">
           <port-select></port-select>
         </div>
@@ -30,13 +30,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { onMounted, onBeforeUnmount, computed } from "vue";
 import { useMainStore } from "./store/main";
 import { onListeningUsbDevicesChanges, offListeningUsbDevicesChanges} from "./api"
 import {showMessageBox} from "./api/electronApi"
 import PortSelect from "./components/PortSelect.vue"
 const store = useMainStore();
 
+const isLoading = computed(()=> store.isConnecting || store.isFetchingPort)
 
 async function onClickConnect() {
   try {
@@ -57,9 +58,9 @@ async function onClickDisconnect() {
 
 async function onChangeUsbDevicesCallback(){
   try {
-    await store.fetchAvailableBoards();
+    await store.fetchavailablePorts();
     if (store.board.isReady) {
-      const isValid = store.availableBoards.find(b => b.port.address === store.selectedPort?.port.address);
+      const isValid = store.availablePorts.find(b => b.port.address === store.selectedPort?.port.address);
       if (!isValid) {
         await store.disconnectBoard();
         store.selectedPort = null;
@@ -82,7 +83,7 @@ onBeforeUnmount(async() => {
 
 onMounted(async() => {
   try {
-    await store.fetchAvailableBoards()
+    await store.fetchavailablePorts()
     onListeningUsbDevicesChanges(onChangeUsbDevicesCallback);
   } catch (e:any) {
     showMessageBox({message: e?.message, title: "Error", detail:e?.details})

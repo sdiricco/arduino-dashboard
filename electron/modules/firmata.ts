@@ -2,6 +2,18 @@ const Firmata = require("firmata");
 
 export let firmata = null;
 
+/**
+ * 
+ *    {
+      "supportedModes":[
+         
+      ],
+      "value":0,
+      "report":1,
+      "analogChannel":127
+   },
+ */
+
 export function connect(path?: string) {
   return new Promise(async (res, rej) => {
     const onFirmata = (e: any) => {
@@ -43,6 +55,7 @@ export function getState(){
       path: firmata?.transport?.path,
       pins: firmata?.pins,
     }
+    console.log('PINS', JSON.stringify(state.pins))
     return state;
   } catch (e) {
     throw(e)

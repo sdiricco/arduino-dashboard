@@ -1,6 +1,3 @@
-export function raiseError(e: any) {
-  throw(e);
-}
 export class ElectronError extends Error {
   name: string;
   details?: string;

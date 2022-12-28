@@ -85,6 +85,7 @@ function getState() {
       path: (_a = firmata == null ? void 0 : firmata.transport) == null ? void 0 : _a.path,
       pins: firmata == null ? void 0 : firmata.pins
     };
+    console.log("PINS", JSON.stringify(state.pins));
     return state;
   } catch (e) {
     throw e;
