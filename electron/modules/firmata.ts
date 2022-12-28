@@ -1,20 +1,9 @@
 const Firmata = require("firmata");
+import {IBoard,IDigitalWrite, IPin, IPinMode, IDisconnectReturnValue} from "../types/firmataTypes"
 
 export let firmata = null;
 
-/**
- * 
- *    {
-      "supportedModes":[
-         
-      ],
-      "value":0,
-      "report":1,
-      "analogChannel":127
-   },
- */
-
-export function connect(path?: string) {
+export function connect(path?: string): Promise<IBoard> {
   return new Promise(async (res, rej) => {
     const onFirmata = (e: any) => {
       e && rej(e);
@@ -28,26 +17,37 @@ export function connect(path?: string) {
   });
 }
 
-export async function disconnect() {
+export async function disconnect(): Promise<IDisconnectReturnValue> {
   return new Promise(async (res, rej) => {
+    const result: IDisconnectReturnValue = {
+      reason: null,
+      success: false,
+    }
     try {
       if (!firmata || !firmata.transport || !firmata?.versionReceived || !firmata?.isReady || !firmata.transport) {
-        console.log(`[FIRMATA:DISCONNECTED] > Not disconnected beacuse already disconnected.. Firmata instance does not exsist`);
+        result.reason = 'Not disconnected beacuse already disconnected.. Firmata instance does not exsist'
+        result.success = true;
         firmata = null;
-        res(true);
-        return
+        res(result);
+        return;
       }
       firmata.transport.close((e: any) => {
-        res(true);
+        result.reason = e || 'Disconnection succesfully'  
+        result.success = true;
+        firmata = null;
+        res(result);
         return;
       });
     } catch (e:any) {
-      console.log(`[FIRMATA:WARN_DISCONNECTING] > Error disconnecting ${e}`);
+      result.reason = e
+      result.success = false;
+      rej(result);
+      return;
     }
   });
 }
 
-export function getState(){
+export function getState():IBoard {
   try {
     const state = {
       versionReceived: firmata?.versionReceived,
@@ -62,7 +62,7 @@ export function getState(){
   }
 }
 
-export function getPins() {
+export function getPins(): Array<IPin> {
   let pins = [];
   try {
     console.log(`[FIRMATA:GET_PINS]`);

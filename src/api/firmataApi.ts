@@ -1,9 +1,11 @@
+import { IDisconnect } from './../../electron/types/firmataTypes';
 import { ipcRenderer } from "electron";
 import { CH } from "../types";
-import { ElectronError, raiseError } from "./errorHandle";
+import { ElectronError } from "./errorHandle";
+import { IBoard, IPinMode, IDigitalWrite, IPin } from "../types/firmataTypes"
 
 /* FIRMATA - CONNECT */
-export async function connect(payload: any): Promise<any> {
+export async function connect(payload: any): Promise<IBoard> {
   const response = await ipcRenderer.invoke(CH.FIRMATA.CONNECT, payload);
   if (response.error) {
     throw new ElectronError(response.error);
@@ -21,7 +23,7 @@ export async function disconnect(): Promise<any> {
 }
 
 /* FIRMATA - PIN MODE */
-export async function pinMode(payload: { pin: number; mode: number }): Promise<any> {
+export async function pinMode(payload: IPinMode): Promise<any> {
   const response = await ipcRenderer.invoke(CH.FIRMATA.PIN_MODE, payload);
   if (response.error) {
     throw new ElectronError(response.error);
@@ -30,7 +32,7 @@ export async function pinMode(payload: { pin: number; mode: number }): Promise<a
 }
 
 /* FIRMATA - DIGITAL WRITE */
-export async function digitalWrite(payload: any): Promise<any> {
+export async function digitalWrite(payload: IDigitalWrite): Promise<any> {
   const response = await ipcRenderer.invoke(CH.FIRMATA.DIGITAL_WRITE, payload);
   if (response.error) {
     throw new ElectronError(response.error);
@@ -39,7 +41,7 @@ export async function digitalWrite(payload: any): Promise<any> {
 }
 
 /* FIRMATA - GET PINS */
-export async function getPins(): Promise<Array<any>> {
+export async function getPins(): Promise<Array<IPin>> {
   const response = await ipcRenderer.invoke(CH.FIRMATA.GET_PINS);
   if (response.error) {
     throw new ElectronError(response.error);

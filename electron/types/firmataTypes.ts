@@ -12,12 +12,21 @@ export interface IBoard {
   pins: Array<IPin>;
 }
 
+/* PIN MODE - INTERFACES */
+/* PIN MODE - PARAMAS */
 export interface IPinMode {
   pin: number;
   mode: number;
 }
+/* PIN MODE - RETURN VALUE */
+export interface IPinModeReturnValue extends IPin {}
 
 export interface IDigitalWrite{
   pin: number;
   value: number;
+}
+
+export interface IDisconnectReturnValue {
+  reason: string | null,
+  success: boolean,
 }

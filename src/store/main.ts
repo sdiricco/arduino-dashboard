@@ -2,18 +2,14 @@ import { defineStore } from "pinia";
 import { connect, pinMode, disconnect } from "../api/firmataApi";
 import { getBoards } from "../api/arduinoApi";
 import { IPort } from "../types/arduinoTypes";
+import { IBoard } from "../types/firmataTypes"
 
 export interface IState {
   availablePorts: Array<IPort>;
   selectedPort: IPort | null;
   isConnecting: boolean;
   isFetchingPort: boolean;
-  board: {
-    versionReceived: boolean;
-    isReady: boolean;
-    path: string;
-    pins: Array<any>;
-  };
+  board: IBoard;
 }
 
 export const useMainStore = defineStore("counter", {
