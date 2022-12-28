@@ -15,6 +15,7 @@ process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL
   : process.env.DIST
 
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 import { release } from 'os'
 import { join } from 'path'
 import * as mainHooks from "./mainHooks"
@@ -42,6 +43,13 @@ const url = process.env.VITE_DEV_SERVER_URL
 const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
+  if (process.env.VITE_DEV_SERVER_URL) {
+    try {
+      await installExtension(VUEJS_DEVTOOLS);
+    } catch (e) {
+      console.error("Vue Devtools failed to install:", e.toString());
+    }
+  }
   win = new BrowserWindow({
     title: 'Main window',
     icon: join(process.env.PUBLIC, 'favicon.ico'),
