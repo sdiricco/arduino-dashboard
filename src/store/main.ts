@@ -1,78 +1,90 @@
 import { defineStore } from "pinia";
-import { connect, pinMode, disconnect } from "../api/firmataApi" 
-import { getBoards } from "../api/arduinoApi"
-import { IState } from "../types/mainStore"
+import { connect, pinMode, disconnect } from "../api/firmataApi";
+import { getBoards } from "../api/arduinoApi";
+import { IPort } from "../types/arduinoTypes";
 
+export interface IState {
+  availablePorts: Array<IPort>;
+  selectedPort: IPort | null;
+  isConnecting: boolean;
+  isFetchingPort: boolean;
+  board: {
+    versionReceived: boolean;
+    isReady: boolean;
+    path: string;
+    pins: Array<any>;
+  };
+}
 
 export const useMainStore = defineStore("counter", {
-  state: ():IState => ({ 
-    availableBoards: [],
+  state: (): IState => ({
+    availablePorts: [],
     selectedPort: null,
     isConnecting: false,
     isFetchingPort: false,
     board: {
       versionReceived: false,
       isReady: false,
-      path: '',
+      path: "",
       pins: [],
-    }
+    },
   }),
 
   getters: {
-    getBoardName: (state) => state.selectedPort?.matching_boards[0]?.name || 'Unknown',
-    getBoardPath: (state) => state.selectedPort?.port.address
+    getBoardName: (state) => (state.selectedPort?.matching_boards?.length ? state.selectedPort.matching_boards[0].name : "Unknown"),
+    getBoardPath: (state) => state.selectedPort?.port.address,
   },
 
   actions: {
-    async fetchAvailableBoards() {
+    async fetchavailablePorts() {
       this.isFetchingPort = true;
       try {
-        this.availableBoards = await getBoards();
+        this.availablePorts = await getBoards();
         this.isFetchingPort = false;
-      } catch (e:any) {
+      } catch (e: any) {
         this.isFetchingPort = false;
-        console.log(e)
+        console.log(e);
         console.error("--- ERROR FETCHING BOARDS ---");
-        console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
-        throw(e);
+        console.table({ name: e?.name, details: e?.details, type: e?.type, code: e?.code });
+        throw e;
       }
     },
-    async connectToBoard(){
-      this.isConnecting = true
+    async connectToBoard() {
+      this.isConnecting = true;
       try {
-        const port = this.selectedPort && this.selectedPort.port && this.selectedPort.port.address || null
+        const port = (this.selectedPort && this.selectedPort.port && this.selectedPort.port.address) || null;
         this.board = await connect(port);
-        this.isConnecting = false
-      } catch (e:any) {
-        this.isConnecting = false
+        this.isConnecting = false;
+      } catch (e: any) {
+        this.isConnecting = false;
         console.error("--- ERROR CONNECTING TO BOARD ---");
-        console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
-        throw(e);
+        console.table({ name: e?.name, details: e?.details, type: e?.type, code: e?.code });
+        throw e;
       }
     },
-    async disconnectBoard(){
+    async disconnectBoard() {
       try {
         await disconnect();
-        this.board.isReady = false
-        this.board.path = ''
+        this.board.isReady = false;
+        this.board.path = "";
         this.board.versionReceived = false;
         this.board.pins = [];
-      } catch (e:any) {
+      } catch (e: any) {
         console.error("--- ERROR DISCONNECTING TO BOARD ---");
-        console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
-        throw(e);
+        console.table({ name: e?.name, details: e?.details, type: e?.type, code: e?.code });
+        throw e;
       }
     },
-    async setAllPinsAsOutput(){
+    async setAllPinsAsOutput() {
       for (let i = 0; i < this.board.pins.length; i++) {
         try {
           await pinMode({ pin: i, mode: 0x01 });
-        } catch (e:any) {
+        } catch (e: any) {
           console.error("--- ERROR SET PIN AS OUTPUT ---");
-          console.table({name: e?.name, details: e?.details, type: e?.type, code: e?.code});
-          throw(e);
+          console.table({ name: e?.name, details: e?.details, type: e?.type, code: e?.code });
+          throw e;
         }
       }
-    }
+    },
   },
 });
