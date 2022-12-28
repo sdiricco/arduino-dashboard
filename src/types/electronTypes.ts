@@ -1,5 +1,3 @@
-import * as electron from "electron";
-
 export interface IError {
   code?: null | number;
   message?: null | string;
@@ -9,18 +7,8 @@ export interface IError {
 }
 
 export interface IIPC {
-    error: IError;
-    data: any
-}
-
-export interface IShowMessageBoxReturnValue {
-  data: electron.MessageBoxReturnValue,
-  error: IError
-}
-
-export interface ISaveDialogReturnValue {
-  data: electron.SaveDialogReturnValue,
-  error: IError
+  error: IError;
+  data: any
 }
 
 export const CH = {

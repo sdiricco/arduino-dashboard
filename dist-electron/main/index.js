@@ -45,14 +45,14 @@ async function getBoards() {
 }
 const Firmata = require("firmata");
 let firmata = null;
-function connect(path2) {
+function connect(params) {
   return new Promise(async (res, rej) => {
     const onFirmata = (e) => {
       e && rej(e);
       res(getState());
     };
     try {
-      firmata = new Firmata(path2, onFirmata);
+      firmata = new Firmata(params, onFirmata);
     } catch (e) {
       rej(e);
     }
@@ -60,19 +60,30 @@ function connect(path2) {
 }
 async function disconnect() {
   return new Promise(async (res, rej) => {
+    const result = {
+      reason: null,
+      success: false
+    };
     try {
       if (!firmata || !firmata.transport || !(firmata == null ? void 0 : firmata.versionReceived) || !(firmata == null ? void 0 : firmata.isReady) || !firmata.transport) {
-        console.log(`[FIRMATA:DISCONNECTED] > Not disconnected beacuse already disconnected.. Firmata instance does not exsist`);
+        result.reason = "Not disconnected beacuse already disconnected.. Firmata instance does not exsist";
+        result.success = true;
         firmata = null;
-        res(true);
+        res(result);
         return;
       }
       firmata.transport.close((e) => {
-        res(true);
+        result.reason = e || "Disconnection succesfully";
+        result.success = true;
+        firmata = null;
+        res(result);
         return;
       });
     } catch (e) {
-      console.log(`[FIRMATA:WARN_DISCONNECTING] > Error disconnecting ${e}`);
+      result.reason = e;
+      result.success = false;
+      rej(result);
+      return;
     }
   });
 }
@@ -80,44 +91,36 @@ function getState() {
   var _a;
   try {
     const state = {
-      versionReceived: firmata == null ? void 0 : firmata.versionReceived,
-      isReady: firmata == null ? void 0 : firmata.isReady,
-      path: (_a = firmata == null ? void 0 : firmata.transport) == null ? void 0 : _a.path,
-      pins: firmata == null ? void 0 : firmata.pins
+      versionReceived: (firmata == null ? void 0 : firmata.versionReceived) || null,
+      isReady: (firmata == null ? void 0 : firmata.isReady) || null,
+      path: ((_a = firmata == null ? void 0 : firmata.transport) == null ? void 0 : _a.path) || null,
+      pins: (firmata == null ? void 0 : firmata.pins) || []
     };
-    console.log("PINS", JSON.stringify(state.pins));
     return state;
   } catch (e) {
     throw e;
   }
 }
 function getPins() {
-  let pins = [];
   try {
-    console.log(`[FIRMATA:GET_PINS]`);
-    pins = firmata.pins;
+    return firmata.pins;
   } catch (e) {
-    console.error(`[FIRMATA:ERROR_GET_PINS] > Error during get pins ${e}`);
     throw e;
   }
-  return pins;
 }
 function pinMode({ pin = null, mode = null }) {
   try {
-    console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
     firmata.pinMode(pin, mode);
+    return firmata.pins[pin];
   } catch (e) {
-    console.error("[FIRMATA:ERROR_PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
     throw e;
   }
-  return true;
 }
 function digitalWrite({ pin = null, value = null }) {
   try {
-    console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
     firmata.digitalWrite(pin, value);
+    return firmata.pins[pin];
   } catch (e) {
-    console.error("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
     throw e;
   }
 }

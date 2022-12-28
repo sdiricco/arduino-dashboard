@@ -1,5 +1,5 @@
 import { ipcRenderer } from "electron";
-import { CH } from "../types";
+import { CH } from "../types/electronTypes";
 import { ElectronError } from "./errorHandle"
 
 /* ARDUINO API */

@@ -13,19 +13,20 @@ export interface IBoard {
 }
 
 /* PIN MODE - INTERFACES */
-/* PIN MODE - PARAMAS */
-export interface IPinMode {
+/* PIN MODE - PARAMS */
+export interface IPinModeParams {
   pin: number;
   mode: number;
 }
-/* PIN MODE - RETURN VALUE */
-export interface IPinModeReturnValue extends IPin {}
 
-export interface IDigitalWrite{
+/* DIGITAL WRITE - INTERFACES */
+/* DIGITAL WRITE - PARAMS */
+export interface IDigitalWriteParams{
   pin: number;
   value: number;
 }
 
+/* DIGITAL WRITE - RETURN VALUE */
 export interface IDisconnectReturnValue {
   reason: string | null,
   success: boolean,

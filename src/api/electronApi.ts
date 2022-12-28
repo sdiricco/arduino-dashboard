@@ -1,6 +1,6 @@
 import { ipcRenderer, MessageBoxOptions, MessageBoxReturnValue } from "electron";
-import { CH } from "../types";
-import { ElectronError, raiseError } from "./errorHandle";
+import { CH } from "../types/electronTypes";
+import { ElectronError } from "./errorHandle";
 
 /* SHOW MESSAGE BOX */
 export async function showMessageBox(messageBoxOptions: MessageBoxOptions): Promise<MessageBoxReturnValue> {

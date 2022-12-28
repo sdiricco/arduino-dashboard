@@ -1,16 +1,16 @@
 const Firmata = require("firmata");
-import {IBoard,IDigitalWrite, IPin, IPinMode, IDisconnectReturnValue} from "../types/firmataTypes"
+import {IBoard, IPin, IDisconnectReturnValue, IPinModeParams, IDigitalWriteParams} from "../types/firmataTypes"
 
 export let firmata = null;
 
-export function connect(path?: string): Promise<IBoard> {
+export function connect(params: string | undefined): Promise<IBoard> {
   return new Promise(async (res, rej) => {
     const onFirmata = (e: any) => {
       e && rej(e);
       res(getState())
     };
     try {
-      firmata = new Firmata(path, onFirmata);
+      firmata = new Firmata(params, onFirmata);
     } catch (e) {
       rej(e);
     }
@@ -47,15 +47,14 @@ export async function disconnect(): Promise<IDisconnectReturnValue> {
   });
 }
 
-export function getState():IBoard {
+export function getState(): IBoard {
   try {
-    const state = {
-      versionReceived: firmata?.versionReceived,
-      isReady: firmata?.isReady,
-      path: firmata?.transport?.path,
-      pins: firmata?.pins,
+    const state:IBoard = {
+      versionReceived: firmata?.versionReceived || null,
+      isReady: firmata?.isReady || null,
+      path: firmata?.transport?.path || null,
+      pins: firmata?.pins || [],
     }
-    console.log('PINS', JSON.stringify(state.pins))
     return state;
   } catch (e) {
     throw(e)
@@ -63,34 +62,27 @@ export function getState():IBoard {
 }
 
 export function getPins(): Array<IPin> {
-  let pins = [];
   try {
-    console.log(`[FIRMATA:GET_PINS]`);
-    pins = firmata.pins;
+    return firmata.pins;
   } catch (e) {
-    console.error(`[FIRMATA:ERROR_GET_PINS] > Error during get pins ${e}`);
     throw e;
   }
-  return pins;
 }
 
-export function pinMode({ pin = null, mode = null }) {
+export function pinMode({ pin = null, mode = null }: IPinModeParams): IPin {
   try {
-    console.log("[FIRMATA:PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
     firmata.pinMode(pin, mode);
+    return firmata.pins[pin];
   } catch (e) {
-    console.error("[FIRMATA:ERROR_PIN_MODE]", `pin ${pin}`, `mode ${mode}`);
     throw e;
   }
-  return true;
 }
 
-export function digitalWrite({ pin = null, value = null }) {
+export function digitalWrite({ pin = null, value = null }: IDigitalWriteParams): IPin {
   try {
-    console.log("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
     firmata.digitalWrite(pin, value);
+    return firmata.pins[pin];
   } catch (e) {
-    console.error("[FIRMATA:DIGITAL_WRITE]", `pin ${pin}`, `value ${value}`);
     throw e;
   }
 }

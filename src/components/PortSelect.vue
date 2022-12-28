@@ -1,14 +1,14 @@
 <template>
   <v-select
-    :disabled="store.isFetchingPort"
-    v-model="store.selectedPort"
+    :disabled="port.isFetchingPort"
+    v-model="port.selectedPort"
     density="compact"
     variant="outlined"
     hide-details
     item-title="port.address"
     item-value="port"
     return-object
-    :items="store.availablePorts"
+    :items="port.availablePorts"
     :menu="showMenu"
     @update:menu="() => (showMenu = !showMenu)"
   >
@@ -19,7 +19,7 @@
       <v-list-item
         :value="item && item.raw"
         :title="(item && item.raw && item.raw.matching_boards && item.raw.matching_boards[0] && item.raw.matching_boards[0].name) || 'unknown'"
-        @click="() => (store.selectedPort = item.raw, showMenu = !showMenu)"
+        @click="() => (port.selectedPort = item.raw, showMenu = !showMenu)"
       >
         <template #title="{ title }">
           {{ title }}
@@ -37,8 +37,8 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useMainStore } from "../store/main";
-const store = useMainStore();
+import { usePortStore } from "../store/port";
+const port = usePortStore();
 
 const showMenu = ref(false);
 </script>

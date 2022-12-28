@@ -12,16 +12,16 @@
     <v-main class="overfloy-y-auto">
       <router-view></router-view>
       <div class="snack">
-        <v-sheet v-if="store.isFetchingPort" class="pa-2 mt-2 px-4">Fetching ports..</v-sheet>
+        <v-sheet v-if="port.isFetchingPort" class="pa-2 mt-2 px-4">Fetching ports..</v-sheet>
       </div>
     </v-main>
     <v-footer height="24px" app class="d-flex justify-space-between pa-1 px-4" color="secondary">
       <div class="text-body-1">0.0.1</div>
-      <div class="d-flex align-center text-body-1" v-if="store.isConnecting">
+      <div class="d-flex align-center text-body-1" v-if="board.isConnecting">
         <v-progress-circular indeterminate class="mr-4" size="x-small"></v-progress-circular>
-        <div>{{ `Connecting to ${store.selectedPort?.port.address}` }}</div>
+        <div>{{ `Connecting to ${port.selectedPort?.port.address}` }}</div>
       </div>
-      <div class="d-flex align-center text-body-1" v-else-if="store.isFetchingPort">
+      <div class="d-flex align-center text-body-1" v-else-if="port.isFetchingPort">
         <v-progress-circular indeterminate class="mr-4" size="x-small"></v-progress-circular>
         <div>{{ `Fetching ports..` }}</div>
       </div>
@@ -31,64 +31,92 @@
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, computed } from "vue";
-import { useMainStore } from "./store/main";
-import { onListeningUsbDevicesChanges, offListeningUsbDevicesChanges} from "./api"
-import {showMessageBox} from "./api/electronApi"
-import PortSelect from "./components/PortSelect.vue"
-const store = useMainStore();
+import { useBoardStore } from "./store/board";
+import { usePortStore } from "./store/port";
+import { onListeningUsbDevicesChanges, offListeningUsbDevicesChanges } from "./api";
+import { showMessageBox } from "./api/electronApi";
+import PortSelect from "./components/PortSelect.vue";
+import { PinMode } from "./types/firmataTypes";
+const board = useBoardStore();
+const port = usePortStore();
 
-const isLoading = computed(()=> store.isConnecting || store.isFetchingPort)
+const isLoading = computed(() => board.isConnecting || port.isFetchingPort);
 
+/**************************************************************/
+/* AUX FUNCTIONS */
+/**************************************************************/
+async function setAllPinsAsOutput(){
+  for (let i = 0; i < board.firmata.pins.length; i++) {
+    await board.pinMode({pin: i, mode: PinMode.Out})
+  }
+}
+
+function checkIfSelectedPortIsAvailable(){
+  return port.availablePorts.find((b) => b.port.address === port.selectedPort?.port.address);
+}
+
+async function validateConnection() {
+  if (board.firmata.isReady) {
+    const available = checkIfSelectedPortIsAvailable();
+    if(available){
+      return;
+    }
+    await board.disconnect();
+    port.selectedPort = null;
+    showMessageBox({ message: "The board is disconnected!", title: "Error" });
+  }
+}
+
+async function onChangeUsbDevicesCallback() {
+  try {
+    await port.fetchPorts();
+    await validateConnection();
+  } catch (e: any) {
+    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
+  }
+}
+
+/**************************************************************/
+/* TEMPLATE METHODS */
+/**************************************************************/
 async function onClickConnect() {
   try {
-    await store.connectToBoard();
-    await store.setAllPinsAsOutput();
-  } catch (e:any) {
-    showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+    if (port.getBoardPath) {
+      await board.connect(port.getBoardPath);
+    }
+    await setAllPinsAsOutput();
+  } catch (e: any) {
+    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
   }
 }
 
 async function onClickDisconnect() {
   try {
-    await store.disconnectBoard();
-  } catch (e:any) {
-    showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+    await board.disconnect();
+  } catch (e: any) {
+    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
   }
 }
 
-async function onChangeUsbDevicesCallback(){
-  try {
-    await store.fetchavailablePorts();
-    if (store.board.isReady) {
-      const isValid = store.availablePorts.find(b => b.port.address === store.selectedPort?.port.address);
-      if (!isValid) {
-        await store.disconnectBoard();
-        store.selectedPort = null;
-        showMessageBox({message: 'The board is disconnected!', title: "Error"})
-      }
-    }
-  } catch (e:any) {
-    showMessageBox({message: e?.message, title: "Error", detail:e?.details})
-  }
-}
-
-onBeforeUnmount(async() => {
+/**************************************************************/
+/* LIFE CYCLE HOOKS */
+/**************************************************************/
+onBeforeUnmount(async () => {
   try {
     offListeningUsbDevicesChanges(onChangeUsbDevicesCallback);
-    await store.disconnectBoard()
-  } catch (e:any) {
-    showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+    await board.disconnect();
+  } catch (e: any) {
+    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
   }
-})
+});
 
-onMounted(async() => {
+onMounted(async () => {
   try {
-    await store.fetchavailablePorts()
+    await port.fetchPorts();
     onListeningUsbDevicesChanges(onChangeUsbDevicesCallback);
-  } catch (e:any) {
-    showMessageBox({message: e?.message, title: "Error", detail:e?.details})
+  } catch (e: any) {
+    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
   }
-
 });
 </script>
 
