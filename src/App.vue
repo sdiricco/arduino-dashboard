@@ -47,7 +47,7 @@ const isLoading = computed(() => board.isConnecting || port.isFetchingPort);
 /**************************************************************/
 async function setAllPinsAsOutput(){
   for (let i = 0; i < board.firmata.pins.length; i++) {
-    await board.pinMode({pin: i, mode: PinMode.Out})
+    await board.pinMode({pin: i, mode: PinMode.OUTPUT})
   }
 }
 

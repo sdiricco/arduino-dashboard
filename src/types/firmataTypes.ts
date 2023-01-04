@@ -1,11 +1,22 @@
 export enum PinMode {
-  In = 0x00,
-  Out = 0x01
+  INPUT = 0x00,
+  OUTPUT = 0x01,
+  ANALOG = 0x02,
+  PWM = 0x03,
+  SERVO = 0x04,
+  SHIFT = 0x05,
+  I2C = 0x06,
+  ONEWIRE = 0x07,
+  STEPPER = 0x08,
+  SERIAL = 0x0A,
+  PULLUP = 0x0B,
+  IGNORE = 0x7F,
+  UNKOWN = 0x10
 }
 
 export enum PinValue {
-  Low = 0x00,
-  High = 0x01
+  LOW = 0x00,
+  HIGH = 0x01
 }
 
 export interface IPin {
