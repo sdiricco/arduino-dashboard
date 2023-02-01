@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, computed } from "vue";
+import { onMounted, onBeforeUnmount, computed, ref } from "vue";
 import { useBoardStore } from "./store/board";
 import { usePortStore } from "./store/port";
 import { onListeningUsbDevicesChanges, offListeningUsbDevicesChanges } from "./api";
@@ -42,23 +42,25 @@ const port = usePortStore();
 
 const isLoading = computed(() => board.isConnecting || port.isFetchingPort);
 
+const drawer = ref(false)
+
 /**************************************************************/
 /* AUX FUNCTIONS */
 /**************************************************************/
-async function setAllPinsAsOutput(){
+async function setAllPinsAsOutput() {
   for (let i = 0; i < board.firmata.pins.length; i++) {
-    await board.pinMode({pin: i, mode: PinMode.Out})
+    await board.pinMode({ pin: i, mode: PinMode.Out });
   }
 }
 
-function checkIfSelectedPortIsAvailable(){
+function checkIfSelectedPortIsAvailable() {
   return port.availablePorts.find((b) => b.port.address === port.selectedPort?.port.address);
 }
 
 async function validateConnection() {
   if (board.firmata.isReady) {
     const available = checkIfSelectedPortIsAvailable();
-    if(available){
+    if (available) {
       return;
     }
     await board.disconnect();
