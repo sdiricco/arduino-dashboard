@@ -1,14 +1,5 @@
 <template>
   <v-app class="overfloy-y-auto">
-    <v-app-bar density="comfortable" app>
-      <div fluid class="d-flex align-center overflow-x-auto px-4">
-        <v-btn :disabled="isLoading" icon="mdi-power-plug" variant="outlined" size="small" @click="onClickConnect"></v-btn>
-        <v-btn :disabled="isLoading" icon="mdi-power-plug-off" class="mr-2" variant="outlined" size="small" @click="onClickDisconnect"></v-btn>
-        <div class="w200">
-          <port-select></port-select>
-        </div>
-      </div>
-    </v-app-bar>
     <v-main class="overfloy-y-auto">
       <router-view></router-view>
       <div class="snack">
