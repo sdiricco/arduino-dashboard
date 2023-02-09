@@ -1,7 +1,6 @@
 import { RouteRecordRaw, createRouter, createWebHashHistory } from 'vue-router';
 import DashboardPage from "../views/DashboardPage.vue"
 import BoardPage from "../views/BoardPage.vue"
-import PinConfigurationPage from "../views/PinConfigurationPage.vue"
 import SettingsPage from "../views/SettingsPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
@@ -22,10 +21,6 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "board",
         component: BoardPage
-      },
-      {
-        path: "pin-configuration",
-        component: PinConfigurationPage
       },
       {
         path: 'settings',

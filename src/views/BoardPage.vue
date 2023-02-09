@@ -1,6 +1,5 @@
 <template>
-  <h2>Board Configuration</h2>
-  <v-divider class="my-8"></v-divider>
+  <h2 class="mb-4">Board Configuration</h2>
   <div class="w200 pb-8">
     <port-select></port-select>
   </div>
@@ -10,6 +9,17 @@
   </div>
 
   <v-divider class="my-8"></v-divider>
+
+  <h2 class="mb-4">Pin Configuration</h2>
+
+  <div class="d-flex align-center flex-wrap">
+    <v-sheet v-for="(pin, i) in board.firmata.pins" class="pa-4 mr-4 mb-4 d-flex flex-column align-center justify-center w200" rounded>
+      <v-chip>{{ i }}</v-chip>
+      <div class="w-100">
+        <v-select label="mode" variant="outlined" :items="pin.supportedModes"></v-select>
+      </div>
+    </v-sheet>
+  </div>
 </template>
 
 <script setup lang="ts">

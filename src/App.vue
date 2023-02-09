@@ -6,43 +6,25 @@
         <v-sheet v-if="port.isFetchingPort" class="pa-2 mt-2 px-4">Fetching ports..</v-sheet>
       </div>
     </v-main>
-    <v-footer height="24px" app class="d-flex justify-space-between pa-1 px-4" color="secondary">
-      <div class="text-body-1">0.0.1</div>
-      <div class="d-flex align-center text-body-1" v-if="board.isConnecting">
-        <v-progress-circular indeterminate class="mr-4" size="x-small"></v-progress-circular>
-        <div>{{ `Connecting to ${port.selectedPort?.port.address}` }}</div>
-      </div>
-      <div class="d-flex align-center text-body-1" v-else-if="port.isFetchingPort">
-        <v-progress-circular indeterminate class="mr-4" size="x-small"></v-progress-circular>
-        <div>{{ `Fetching ports..` }}</div>
-      </div>
-    </v-footer>
+    <app-footer></app-footer>
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, computed, ref } from "vue";
+import AppFooter from "./components/AppFooter.vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import { useBoardStore } from "./store/board";
 import { usePortStore } from "./store/port";
 import { onListeningUsbDevicesChanges, offListeningUsbDevicesChanges } from "./api";
 import { showMessageBox } from "./api/electronApi";
-import PortSelect from "./components/PortSelect.vue";
-import { PinMode } from "./types/firmataTypes";
 const board = useBoardStore();
 const port = usePortStore();
 
-const isLoading = computed(() => board.isConnecting || port.isFetchingPort);
-
-const drawer = ref(false)
 
 /**************************************************************/
 /* AUX FUNCTIONS */
 /**************************************************************/
-async function setAllPinsAsOutput() {
-  for (let i = 0; i < board.firmata.pins.length; i++) {
-    await board.pinMode({ pin: i, mode: PinMode.Out });
-  }
-}
+
 
 function checkIfSelectedPortIsAvailable() {
   return port.availablePorts.find((b) => b.port.address === port.selectedPort?.port.address);
@@ -72,24 +54,8 @@ async function onChangeUsbDevicesCallback() {
 /**************************************************************/
 /* TEMPLATE METHODS */
 /**************************************************************/
-async function onClickConnect() {
-  try {
-    if (port.getBoardPath) {
-      await board.connect(port.getBoardPath);
-    }
-    await setAllPinsAsOutput();
-  } catch (e: any) {
-    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
-  }
-}
 
-async function onClickDisconnect() {
-  try {
-    await board.disconnect();
-  } catch (e: any) {
-    showMessageBox({ message: e?.message, title: "Error", detail: e?.details });
-  }
-}
+
 
 /**************************************************************/
 /* LIFE CYCLE HOOKS */

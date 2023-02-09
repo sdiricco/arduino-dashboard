@@ -8,11 +8,6 @@
       <v-icon class="px-4" size="x-large">mdi-chip</v-icon>
       <p class="text-caption">Board</p>
     </v-tab>
-    <v-tab value="pin-configuration" class="h100 d-flex align-center justify-center" to="/home/pin-configuration">
-      <v-icon class="px-4" size="x-large">mdi-tune</v-icon>
-
-      <p class="text-caption">Pin Configuration</p>
-    </v-tab>
     <v-tab value="settings" class="h100 d-flex align-center justify-center" to="/home/settings">
       <v-icon class="px-4" size="x-large">mdi-cog</v-icon>
       <p class="text-caption">Settings</p>
